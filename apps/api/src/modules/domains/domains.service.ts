@@ -1,6 +1,7 @@
 import { DEFAULT_DOMAIN } from '@repo/shared'
 import type { FastifyInstance } from 'fastify'
 import { redirectCache } from '../../common/utils/link-cache.js'
+import { domainDriftCache } from '../../common/utils/domain-drift-cache.js'
 import { AuditService } from '../audit/audit.service.js'
 import {
   expectedDomainTargetHost,
@@ -95,6 +96,7 @@ export class DomainsService {
     }
 
     const domain = await this.repo.createDomain(workspaceId, hostname)
+    domainDriftCache.invalidate(workspaceId)
 
     await this.audit.log({
       workspaceId,
@@ -188,6 +190,7 @@ export class DomainsService {
     }
 
     const updated = await this.repo.rotateVerificationToken(domain.id)
+    domainDriftCache.invalidate(workspaceId)
 
     await this.audit.log({
       workspaceId,
@@ -222,6 +225,7 @@ export class DomainsService {
       status: nextStatus,
       verifiedAt: nextStatus === 'PENDING' ? null : domain.verifiedAt
     })
+    domainDriftCache.invalidate(workspaceId)
 
     await this.audit.log({
       workspaceId,
@@ -272,6 +276,7 @@ export class DomainsService {
     }
 
     await this.repo.deleteDomain(domain.id)
+    domainDriftCache.invalidate(workspaceId)
 
     await this.audit.log({
       workspaceId,
@@ -319,6 +324,7 @@ export class DomainsService {
     }
 
     const verified = await this.repo.verifyDomain(domain.id)
+    domainDriftCache.invalidate(domain.workspaceId)
     return toPublicDomain(verified)
   }
 

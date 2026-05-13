@@ -89,6 +89,16 @@ type OpsOverview = {
   storage: {
     provider: string
   }
+  cache: {
+    mode: string
+    redisConfigured: boolean
+    l1: {
+      entryCount: number
+      totalBytes: number
+      maxEntries: number
+      maxBytes: number
+    }
+  }
   exportHealth: {
     pendingExports: number
     failedExports: number
@@ -842,6 +852,12 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <p className="text-xs text-white/50">Redirect cache</p>
+              <p className="mt-2 text-xl font-semibold uppercase">
+                {opsOverview?.cache.mode || 'l1-only'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
               <p className="text-xs text-white/50">Queued exports</p>
               <p className="mt-2 text-xl font-semibold">
                 {opsOverview?.exportHealth.pendingExports ?? 0}
@@ -853,6 +869,17 @@ export default function SettingsPage() {
                 {opsOverview?.activeApiKeys ?? 0}
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-white/65">
+            <p>
+              Hot redirect paths are served through a bounded in-memory L1 cache first, then Redis/Upstash as L2, with PostgreSQL remaining the source of truth.
+            </p>
+            <p className="mt-2">
+              L1 usage: {opsOverview?.cache.l1.entryCount ?? 0}/{opsOverview?.cache.l1.maxEntries ?? 0} entries
+              {' '}| ~{Math.round(((opsOverview?.cache.l1.totalBytes ?? 0) / 1024 / 1024) * 10) / 10} MB of
+              {' '}{Math.round(((opsOverview?.cache.l1.maxBytes ?? 0) / 1024 / 1024) * 10) / 10} MB
+            </p>
           </div>
 
           <div className="mt-6 space-y-3">

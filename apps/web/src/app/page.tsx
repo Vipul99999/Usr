@@ -1,5 +1,28 @@
 import Link from 'next/link'
 import { CtaStrip } from '@/components/marketing/cta-strip'
+import type { Metadata } from 'next'
+
+const pageUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_SHORT_URL_BASE || 'http://localhost:3000'
+
+export const metadata: Metadata = {
+  title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+  description:
+    'Create branded short links, track campaign clicks, generate QR codes, and manage team-ready workspaces from a premium startup-friendly dashboard.',
+  alternates: {
+    canonical: '/'
+  },
+  openGraph: {
+    title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+    description:
+      'Launch short links fast, organize campaigns, and understand performance with clean, team-ready analytics.',
+    url: pageUrl
+  },
+  twitter: {
+    title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+    description:
+      'Launch short links fast, organize campaigns, and understand performance with clean, team-ready analytics.'
+  }
+}
 
 export default function Page() {
   const features = [
@@ -78,9 +101,61 @@ export default function Page() {
   ]
 
   const logos = ['LaunchCo', 'BrightOps', 'Northlane', 'StudioFlow', 'MetricForge']
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a
+      }
+    }))
+  }
+  const softwareSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'UrlShortener',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    offers: [
+      {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+        name: 'Starter'
+      },
+      {
+        '@type': 'Offer',
+        price: '19',
+        priceCurrency: 'USD',
+        name: 'Pro'
+      }
+    ],
+    description:
+      'A startup-friendly URL shortener for branded links, workspace collaboration, analytics, QR generation, and campaign organization.',
+    url: pageUrl,
+    featureList: [
+      'Branded short links',
+      'Custom domains',
+      'QR code generation',
+      'Workspace collaboration',
+      'Click analytics',
+      'CSV exports'
+    ]
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute right-0 top-40 h-[360px] w-[360px] rounded-full bg-indigo-500/20 blur-3xl" />
@@ -157,6 +232,18 @@ export default function Page() {
               >
                 View dashboard preview
               </Link>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3 text-sm text-white/58">
+              <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-200">
+                Launch-ready architecture
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Startup-friendly pricing
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Built for custom domains
+              </span>
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">

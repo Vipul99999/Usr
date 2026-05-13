@@ -6,6 +6,8 @@ import {
   resolveDnsDiagnostics,
   resolveTargetDiagnostics
 } from '../../common/utils/custom-domains.js'
+import { domainDriftCache, type DomainDriftItem } from '../../common/utils/domain-drift-cache.js'
+import { redirectCache } from '../../common/utils/link-cache.js'
 
 export class OpsService {
   constructor(private app: FastifyInstance) {}
@@ -119,42 +121,48 @@ export class OpsService {
         })
       ])
 
-    const targetHost = expectedDomainTargetHost()
-    const targetDnsInfo = await resolveTargetDiagnostics(targetHost)
-    const domainDrift = await Promise.all(
-      workspaceDomains.map(async (domain) => {
-        const dns = await resolveDnsDiagnostics(domain.hostname)
-        const pointsCorrectly = pointsToExpectedTarget(dns, targetDnsInfo, targetHost)
-        const usesRecommendedCname = !targetHost || dns.cnameRecords.includes(targetHost)
+    let domainDrift = domainDriftCache.get(workspaceId)
 
-        const issues: string[] = []
-        if (!pointsCorrectly) {
-          issues.push('DNS no longer points to the expected target')
-        }
+    if (!domainDrift) {
+      const targetHost = expectedDomainTargetHost()
+      const targetDnsInfo = await resolveTargetDiagnostics(targetHost)
+      domainDrift = await Promise.all(
+        workspaceDomains.map(async (domain): Promise<DomainDriftItem> => {
+          const dns = await resolveDnsDiagnostics(domain.hostname)
+          const pointsCorrectly = pointsToExpectedTarget(dns, targetDnsInfo, targetHost)
+          const usesRecommendedCname = !targetHost || dns.cnameRecords.includes(targetHost)
 
-        if (pointsCorrectly && !usesRecommendedCname && (dns.aRecords.length > 0 || dns.aaaaRecords.length > 0)) {
-          issues.push('Direct A/AAAA records detected instead of the recommended CNAME setup')
-        }
+          const issues: string[] = []
+          if (!pointsCorrectly) {
+            issues.push('DNS no longer points to the expected target')
+          }
 
-        if (domain.status === 'VERIFIED' && !pointsCorrectly) {
-          issues.push('Verified domain may fail live traffic until DNS is corrected')
-        }
+          if (pointsCorrectly && !usesRecommendedCname && (dns.aRecords.length > 0 || dns.aaaaRecords.length > 0)) {
+            issues.push('Direct A/AAAA records detected instead of the recommended CNAME setup')
+          }
 
-        return {
-          id: domain.id,
-          hostname: domain.hostname,
-          status: domain.status,
-          verifiedAt: domain.verifiedAt,
-          pointsCorrectly,
-          usesRecommendedCname,
-          issueCount: issues.length,
-          issues
-        }
-      })
-    )
+          if (domain.status === 'VERIFIED' && !pointsCorrectly) {
+            issues.push('Verified domain may fail live traffic until DNS is corrected')
+          }
+
+          return {
+            id: domain.id,
+            hostname: domain.hostname,
+            status: domain.status,
+            verifiedAt: domain.verifiedAt,
+            pointsCorrectly,
+            usesRecommendedCname,
+            issueCount: issues.length,
+            issues
+          }
+        })
+      )
+      domainDriftCache.set(workspaceId, domainDrift)
+    }
 
     return {
       storage: describeObjectStorage(),
+      cache: redirectCache.getStats(),
       exportHealth: {
         pendingExports,
         failedExports

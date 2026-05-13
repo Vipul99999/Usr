@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Providers } from './providers'
 
 const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_SHORT_URL_BASE || 'http://localhost:3000'
@@ -13,6 +13,15 @@ export const metadata: Metadata = {
   description:
     'Create branded short links, monitor campaign performance, invite teammates, and ship faster with a link platform built for modern startups.',
   applicationName: 'UrlShortener',
+  manifest: '/manifest.webmanifest',
+  category: 'technology',
+  creator: 'UrlShortener',
+  publisher: 'UrlShortener',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false
+  },
   keywords: [
     'URL shortener',
     'link analytics',
@@ -43,6 +52,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true
   }
+}
+
+export const viewport: Viewport = {
+  themeColor: '#03111f',
+  colorScheme: 'dark'
 }
 
 export default function RootLayout({
