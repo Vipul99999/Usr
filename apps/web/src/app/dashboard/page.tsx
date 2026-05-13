@@ -264,6 +264,17 @@ export default function DashboardPage() {
             Manage profile, members, and workspace branding.
           </p>
         </Link>
+
+        <Link
+          href="/dashboard/security"
+          className="rounded-[28px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+        >
+          <p className="text-sm text-white/50">Quick action</p>
+          <h3 className="mt-2 text-xl font-semibold">Review security signals</h3>
+          <p className="mt-2 text-white/60">
+            Watch abuse events, API key activity, and domain drift before they become customer-facing.
+          </p>
+        </Link>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
@@ -303,6 +314,8 @@ export default function DashboardPage() {
               <EmptyState
                 title="No links yet"
                 description="Create your first short link to start seeing top performers here."
+                actionLabel="Create links"
+                actionHref="/dashboard/links"
               />
             ) : (
               topLinks.map((link, index) => (
@@ -325,7 +338,7 @@ export default function DashboardPage() {
                         {buildShortUrl(link.slug, link.domain)}
                       </p>
                       <p className="mt-2 truncate text-xs text-white/45">
-                        Campaign: {link.campaign || '—'}
+                        Campaign: {link.campaign || 'Not set'}
                       </p>
                     </div>
                     <span className="rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">

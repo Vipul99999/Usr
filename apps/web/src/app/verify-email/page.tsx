@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { FormMessage } from '@/components/ui/form-message'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token') || ''
 
@@ -43,7 +43,7 @@ export default function VerifyEmailPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
         <h1 className="text-3xl font-semibold">Verify email</h1>
-        <p className="mt-2 text-white/60">We’re confirming your email address.</p>
+        <p className="mt-2 text-white/60">We&apos;re confirming your email address.</p>
 
         <div className="mt-8 space-y-5">
           {loading ? (
@@ -66,5 +66,22 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
+            <h1 className="text-3xl font-semibold">Verify email</h1>
+            <p className="mt-8 text-white/70">Verifying...</p>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

@@ -1,0 +1,241 @@
+'use client'
+
+import { useEffect } from 'react'
+import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { apiFetch } from '@/lib/api'
+import { useAuthStore } from '@/lib/store/auth-store'
+import { Card } from '@/components/ui/card'
+import { SkeletonCard } from '@/components/ui/skeleton-card'
+import { EmptyState } from '@/components/ui/empty-state'
+
+type OpsOverview = {
+  storage: {
+    provider: string
+  }
+  exportHealth: {
+    pendingExports: number
+    failedExports: number
+  }
+  activeApiKeys: number
+  domainHealth: Array<{
+    status: string
+    count: number
+  }>
+  recentAbuseSignals: Array<{
+    id: string
+    source: string
+    kind: string
+    hostname: string | null
+    path: string | null
+    actionTaken: string | null
+    createdAt: string
+  }>
+  recentApiKeyEvents: Array<{
+    id: string
+    method: string
+    route: string
+    statusCode: number
+    latencyMs: number | null
+    createdAt: string
+    apiKey: {
+      name: string
+      keyPrefix: string
+    }
+  }>
+  domainDrift: Array<{
+    id: string
+    hostname: string
+    status: string
+    verifiedAt: string | null
+    pointsCorrectly: boolean
+    usesRecommendedCname: boolean
+    issueCount: number
+    issues: string[]
+  }>
+}
+
+export default function SecurityPage() {
+  const { accessToken, workspaceId, hydrate } = useAuthStore()
+
+  useEffect(() => {
+    hydrate()
+  }, [hydrate])
+
+  const opsQuery = useQuery({
+    queryKey: ['workspace-security-ops', workspaceId],
+    queryFn: () =>
+      apiFetch<OpsOverview>(`/workspaces/${workspaceId}/ops/overview`, {
+        token: accessToken || undefined
+      }),
+    enabled: !!accessToken && !!workspaceId
+  })
+
+  if (opsQuery.isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    )
+  }
+
+  if (opsQuery.error) {
+    return (
+      <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-red-300">
+        {opsQuery.error instanceof Error ? opsQuery.error.message : 'Failed to load security overview'}
+      </div>
+    )
+  }
+
+  const ops = opsQuery.data
+  const driftedDomains = (ops?.domainDrift || []).filter((item) => item.issueCount > 0)
+
+  return (
+    <div className="grid gap-6">
+      <Card>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm text-white/50">Security center</p>
+            <h1 className="mt-2 text-3xl font-semibold">Watch the signals that can quietly break trust.</h1>
+            <p className="mt-3 max-w-3xl text-white/65">
+              This is the founder view for launch week: abuse spikes, domain drift, API key activity, and the small things
+              that can become customer-facing incidents if nobody notices them early.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/settings"
+            className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/80 transition hover:bg-white/5"
+          >
+            Open domain settings
+          </Link>
+        </div>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <p className="text-sm text-white/50">Abuse signals</p>
+          <p className="mt-3 text-4xl font-semibold">{ops?.recentAbuseSignals.length ?? 0}</p>
+          <p className="mt-2 text-sm text-white/55">Recent auth, redirect, or API-key incidents</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-white/50">Domain drift alerts</p>
+          <p className="mt-3 text-4xl font-semibold">{driftedDomains.length}</p>
+          <p className="mt-2 text-sm text-white/55">Connected domains with DNS or routing concerns</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-white/50">Recent API key calls</p>
+          <p className="mt-3 text-4xl font-semibold">{ops?.recentApiKeyEvents.length ?? 0}</p>
+          <p className="mt-2 text-sm text-white/55">Latest machine-to-machine traffic in this workspace</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-white/50">Storage mode</p>
+          <p className="mt-3 text-4xl font-semibold uppercase">{ops?.storage.provider || 'local'}</p>
+          <p className="mt-2 text-sm text-white/55">Export and asset delivery backend currently in use</p>
+        </Card>
+      </div>
+
+      <Card>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold">Domain health drift</h2>
+            <p className="mt-1 text-white/60">Catch branded domains that look connected but are no longer safe for live traffic.</p>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          {driftedDomains.length === 0 ? (
+            <EmptyState
+              title="No domain drift detected"
+              description="Connected domains currently match the expected target and do not show major routing issues."
+            />
+          ) : (
+            driftedDomains.map((domain) => (
+              <div key={domain.id} className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-5">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-medium text-white">{domain.hostname}</p>
+                    <p className="mt-1 text-sm text-white/60">
+                      Status: {domain.status} {domain.verifiedAt ? `| Verified ${new Date(domain.verifiedAt).toLocaleString()}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-white/70">
+                      Points correctly: {domain.pointsCorrectly ? 'Yes' : 'No'}
+                    </span>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-white/70">
+                      Recommended CNAME: {domain.usesRecommendedCname ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm text-amber-100/90">
+                  {domain.issues.map((issue) => (
+                    <p key={issue}>{issue}</p>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <h2 className="text-xl font-semibold">Recent abuse signals</h2>
+          <p className="mt-1 text-white/60">Use these to spot redirect probing, auth pressure, or machine-auth trouble early.</p>
+
+          <div className="mt-6 space-y-3">
+            {(ops?.recentAbuseSignals || []).length === 0 ? (
+              <p className="text-sm text-white/55">No recent abuse signals in this workspace.</p>
+            ) : (
+              (ops?.recentAbuseSignals || []).map((signal) => (
+                <div key={signal.id} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-white">{signal.kind.replace(/_/g, ' ')}</p>
+                    <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-200">
+                      {signal.actionTaken || 'flagged'}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-white/55">
+                    {signal.source} {signal.hostname ? `| ${signal.hostname}` : ''} {signal.path ? `| ${signal.path}` : ''}
+                  </p>
+                  <p className="mt-2 text-xs text-white/45">{new Date(signal.createdAt).toLocaleString()}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold">Recent API key traffic</h2>
+          <p className="mt-1 text-white/60">A quick machine-auth pulse so you can spot noisy or failing integrations early.</p>
+
+          <div className="mt-6 space-y-3">
+            {(ops?.recentApiKeyEvents || []).length === 0 ? (
+              <p className="text-sm text-white/55">No recent API key activity yet.</p>
+            ) : (
+              (ops?.recentApiKeyEvents || []).map((event) => (
+                <div key={event.id} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-white">{event.apiKey.name}</p>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/70">
+                      {event.statusCode}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-white/55">
+                    {event.method} {event.route} | Prefix {event.apiKey.keyPrefix}
+                  </p>
+                  <p className="mt-2 text-xs text-white/45">
+                    {new Date(event.createdAt).toLocaleString()}
+                    {typeof event.latencyMs === 'number' ? ` | ${event.latencyMs} ms` : ''}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}

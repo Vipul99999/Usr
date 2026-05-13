@@ -1,3 +1,4 @@
+import dns from 'node:dns/promises'
 import { DEFAULT_DOMAIN } from '@repo/shared'
 
 const disallowedHostnames = new Set([
@@ -93,4 +94,72 @@ export function isDefaultShortDomain(hostname: string | null, configuredHosts: s
     .map((host) => configuredHostname(host))
     .filter((host): host is string => Boolean(host))
     .includes(hostname)
+}
+
+export function expectedDomainTargetHost() {
+  if (process.env.CUSTOM_DOMAIN_TARGET_HOST) {
+    return process.env.CUSTOM_DOMAIN_TARGET_HOST.toLowerCase()
+  }
+
+  try {
+    return new URL(process.env.API_URL || '').hostname.toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+export async function resolveDnsDiagnostics(hostname: string) {
+  const [cnameRecords, aRecords, aaaaRecords] = await Promise.all([
+    dns.resolveCname(hostname).catch(() => [] as string[]),
+    dns.resolve4(hostname).catch(() => [] as string[]),
+    dns.resolve6(hostname).catch(() => [] as string[])
+  ])
+
+  return {
+    cnameRecords: cnameRecords.map((value) => value.toLowerCase()),
+    aRecords,
+    aaaaRecords
+  }
+}
+
+export async function resolveTargetDiagnostics(targetHost: string | null) {
+  if (!targetHost) {
+    return {
+      cnameRecords: [] as string[],
+      aRecords: [] as string[],
+      aaaaRecords: [] as string[]
+    }
+  }
+
+  return resolveDnsDiagnostics(targetHost)
+}
+
+function hasIpOverlap(values: string[], expected: string[]) {
+  if (values.length === 0 || expected.length === 0) {
+    return false
+  }
+
+  return values.some((value) => expected.includes(value))
+}
+
+export function pointsToExpectedTarget(
+  dnsInfo: Awaited<ReturnType<typeof resolveDnsDiagnostics>>,
+  targetInfo: Awaited<ReturnType<typeof resolveTargetDiagnostics>>,
+  targetHost: string | null
+) {
+  if (!targetHost) {
+    return true
+  }
+
+  if (
+    dnsInfo.cnameRecords.includes(targetHost) ||
+    dnsInfo.cnameRecords.some((record) => record.endsWith(`.${targetHost}`))
+  ) {
+    return true
+  }
+
+  return (
+    hasIpOverlap(dnsInfo.aRecords, targetInfo.aRecords) ||
+    hasIpOverlap(dnsInfo.aaaaRecords, targetInfo.aaaaRecords)
+  )
 }

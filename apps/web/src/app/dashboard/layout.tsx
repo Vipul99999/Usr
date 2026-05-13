@@ -10,12 +10,14 @@ import {
   LayoutDashboard,
   Link2,
   LogOut,
+  Shield,
   Settings,
   Users
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { WorkspaceSwitcher } from '@/app/dashboard/workspace-switcher'
 import { MobileDashboardNav } from '@/components/dashboard/mobile-dashboard-nav'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 type Props = {
   children: ReactNode
@@ -30,6 +32,7 @@ function getPageTitle(pathname: string) {
   if (pathname === '/dashboard/api-keys') return 'API Keys'
   if (pathname === '/dashboard/audit-logs') return 'Audit Logs'
   if (pathname === '/dashboard/members') return 'Members'
+  if (pathname === '/dashboard/security') return 'Security'
   if (pathname === '/dashboard/exports') return 'Exports'
   if (pathname === '/dashboard/settings') return 'Settings'
   if (pathname === '/dashboard/change-password') return 'Change Password'
@@ -42,6 +45,7 @@ const navItems = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/members', label: 'Members', icon: Users },
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
+  { href: '/dashboard/security', label: 'Security', icon: Shield },
   { href: '/dashboard/exports', label: 'Exports', icon: FileText },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings }
 ]
@@ -68,8 +72,13 @@ export default function DashboardLayout({ children }: Props) {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
+        <div className="w-full max-w-md rounded-[30px] border border-white/10 bg-[rgba(8,19,36,0.74)] p-8 text-center shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur">
+          <p className="text-sm uppercase tracking-[0.24em] text-cyan-200/70">Opening dashboard</p>
+          <div className="mt-6 flex justify-center">
+            <LoadingSpinner label="Loading navigation, workspace access, and your latest data..." />
+          </div>
+        </div>
       </div>
     )
   }

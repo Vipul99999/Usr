@@ -1,452 +1,468 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
-import { useAuthStore } from "@/lib/store/auth-store";
+import { useEffect, useState } from 'react'
+import { Copy } from 'lucide-react'
+import { apiFetch } from '@/lib/api'
+import { useAuthStore } from '@/lib/store/auth-store'
 import {
   updateProfileSchema,
-  updateWorkspaceSchema,
-} from "@/lib/validations/settings";
-import { TextField } from "@/components/ui/text-field";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FormMessage } from "@/components/ui/form-message";
-import { SkeletonCard } from "@/components/ui/skeleton-card";
-import { useToast } from "@/lib/hooks/use-toast";
-import { formatWorkspaceRole } from "@/lib/utils/roles";
+  updateWorkspaceSchema
+} from '@/lib/validations/settings'
+import { TextField } from '@/components/ui/text-field'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { FormMessage } from '@/components/ui/form-message'
+import { SkeletonCard } from '@/components/ui/skeleton-card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useToast } from '@/lib/hooks/use-toast'
+import { formatWorkspaceRole } from '@/lib/utils/roles'
 
 type MeResponse = {
-  id: string;
-  email: string;
-  name: string | null;
-  avatarUrl: string | null;
-  emailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+  id: string
+  email: string
+  name: string | null
+  avatarUrl: string | null
+  emailVerified: boolean
+  createdAt: string
+  updatedAt: string
+}
 
 type WorkspaceMembership = {
-  id: string;
-  role: string;
-  joinedAt: string;
+  id: string
+  role: string
+  joinedAt: string
   workspace: {
-    id: string;
-    name: string;
-    slug: string;
-    brandingTitle: string | null;
-    plan: string;
-    createdAt: string;
-  };
-};
+    id: string
+    name: string
+    slug: string
+    brandingTitle: string | null
+    plan: string
+    createdAt: string
+  }
+}
 
 type Member = {
-  id: string;
-  role: string;
-  joinedAt: string;
+  id: string
+  role: string
+  joinedAt: string
   user: {
-    id: string;
-    email: string;
-    name: string | null;
-    avatarUrl: string | null;
-    emailVerified: boolean;
-    createdAt: string;
-  };
-};
+    id: string
+    email: string
+    name: string | null
+    avatarUrl: string | null
+    emailVerified: boolean
+    createdAt: string
+  }
+}
 
 type DomainItem = {
-  id: string;
-  hostname: string;
-  status: string;
-  verifiedAt: string | null;
-  createdAt: string;
-  verificationPath: string | null;
-  shortBaseUrl: string;
-  linkCount?: number;
-};
+  id: string
+  hostname: string
+  status: string
+  verifiedAt: string | null
+  createdAt: string
+  verificationPath: string | null
+  shortBaseUrl: string
+  linkCount?: number
+}
 
 type DomainDiagnostics = DomainItem & {
-  linkCount: number;
-  expectedTargetHost: string | null;
-  verificationReady: boolean;
-  assignmentAllowed: boolean;
+  linkCount: number
+  expectedTargetHost: string | null
+  verificationReady: boolean
+  assignmentAllowed: boolean
+  canSafelyServeTraffic: boolean
   dns: {
-    cnameRecords: string[];
-    aRecords: string[];
-    pointsToExpectedTarget: boolean;
-  };
-  issues: string[];
-  recommendations: string[];
-};
+    cnameRecords: string[]
+    aRecords: string[]
+    aaaaRecords: string[]
+    targetARecords: string[]
+    targetAaaaRecords: string[]
+    pointsToExpectedTarget: boolean
+    usesRecommendedCname: boolean
+  }
+  issues: string[]
+  recommendations: string[]
+}
 
 type OpsOverview = {
   storage: {
-    provider: string;
-  };
+    provider: string
+  }
   exportHealth: {
-    pendingExports: number;
-    failedExports: number;
-  };
-  activeApiKeys: number;
+    pendingExports: number
+    failedExports: number
+  }
+  activeApiKeys: number
   recentEmailEvents: Array<{
-    id: string;
-    provider: string;
-    emailType: string;
-    recipient: string | null;
-    eventType: string;
-    status: string | null;
-    createdAt: string;
-  }>;
+    id: string
+    provider: string
+    emailType: string
+    recipient: string | null
+    eventType: string
+    status: string | null
+    createdAt: string
+  }>
   recentAbuseSignals: Array<{
-    id: string;
-    source: string;
-    kind: string;
-    hostname: string | null;
-    path: string | null;
-    actionTaken: string | null;
-    createdAt: string;
-  }>;
-};
+    id: string
+    source: string
+    kind: string
+    hostname: string | null
+    path: string | null
+    actionTaken: string | null
+    createdAt: string
+  }>
+}
 
 export default function SettingsPage() {
-  const { accessToken, workspaceId, hydrate } = useAuthStore();
-  const toast = useToast();
+  const { accessToken, workspaceId, hydrate } = useAuthStore()
+  const toast = useToast()
 
-  const [profile, setProfile] = useState<MeResponse | null>(null);
-  const [workspace, setWorkspace] = useState<WorkspaceMembership | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [domains, setDomains] = useState<DomainItem[]>([]);
-  const [opsOverview, setOpsOverview] = useState<OpsOverview | null>(null);
+  const [profile, setProfile] = useState<MeResponse | null>(null)
+  const [workspace, setWorkspace] = useState<WorkspaceMembership | null>(null)
+  const [members, setMembers] = useState<Member[]>([])
+  const [domains, setDomains] = useState<DomainItem[]>([])
+  const [opsOverview, setOpsOverview] = useState<OpsOverview | null>(null)
   const [domainDiagnostics, setDomainDiagnostics] = useState<
     Record<string, DomainDiagnostics>
-  >({});
+  >({})
 
-  const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [workspaceName, setWorkspaceName] = useState("");
-  const [brandingTitle, setBrandingTitle] = useState("");
-  const [customDomain, setCustomDomain] = useState("");
+  const [name, setName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [workspaceName, setWorkspaceName] = useState('')
+  const [brandingTitle, setBrandingTitle] = useState('')
+  const [customDomain, setCustomDomain] = useState('')
 
-  const [loading, setLoading] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingWorkspace, setSavingWorkspace] = useState(false);
-  const [savingDomain, setSavingDomain] = useState(false);
-  const [domainActionId, setDomainActionId] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(true)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [savingWorkspace, setSavingWorkspace] = useState(false)
+  const [savingDomain, setSavingDomain] = useState(false)
+  const [domainActionId, setDomainActionId] = useState<string | null>(null)
+  const [domainToRemove, setDomainToRemove] = useState<DomainItem | null>(null)
+  const [domainDeleteBusy, setDomainDeleteBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
-    {},
-  );
-  const [workspaceErrors, setWorkspaceErrors] = useState<
-    Record<string, string>
-  >({});
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({})
+  const [workspaceErrors, setWorkspaceErrors] = useState<Record<string, string>>({})
+
   const dnsTarget = (() => {
     try {
-      const explicitTarget = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_TARGET_HOST;
+      const explicitTarget = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_TARGET_HOST
       if (explicitTarget) {
-        return explicitTarget;
+        return explicitTarget
       }
-      return new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000")
-        .hostname;
+      return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
+        .hostname
     } catch {
-      return "your-api-host.example.com";
+      return 'your-api-host.example.com'
     }
-  })();
+  })()
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrate()
+  }, [hydrate])
 
   useEffect(() => {
     const load = async () => {
-      if (!accessToken || !workspaceId) return;
+      if (!accessToken || !workspaceId) return
 
       try {
-        setLoading(true);
-        setError("");
+        setLoading(true)
+        setError('')
 
         const [me, memberships, workspaceMembers, workspaceDomains, ops] = await Promise.all([
-          apiFetch<MeResponse>("/users/me", { token: accessToken }),
-          apiFetch<WorkspaceMembership[]>("/workspaces", {
-            token: accessToken,
+          apiFetch<MeResponse>('/users/me', { token: accessToken }),
+          apiFetch<WorkspaceMembership[]>('/workspaces', {
+            token: accessToken
           }),
           apiFetch<Member[]>(`/workspaces/${workspaceId}/members`, {
-            token: accessToken,
+            token: accessToken
           }),
           apiFetch<DomainItem[]>(`/workspaces/${workspaceId}/domains`, {
-            token: accessToken,
+            token: accessToken
           }),
           apiFetch<OpsOverview>(`/workspaces/${workspaceId}/ops/overview`, {
-            token: accessToken,
-          }),
-        ]);
+            token: accessToken
+          })
+        ])
 
         const currentWorkspace =
           memberships.find((item) => item.workspace.id === workspaceId) ||
-          memberships[0];
+          memberships[0]
 
-        setProfile(me);
-        setWorkspace(currentWorkspace || null);
-        setMembers(workspaceMembers);
-        setDomains(workspaceDomains);
-        setOpsOverview(ops);
+        setProfile(me)
+        setWorkspace(currentWorkspace || null)
+        setMembers(workspaceMembers)
+        setDomains(workspaceDomains)
+        setOpsOverview(ops)
 
-        setName(me.name || "");
-        setAvatarUrl(me.avatarUrl || "");
-        setWorkspaceName(currentWorkspace?.workspace.name || "");
-        setBrandingTitle(currentWorkspace?.workspace.brandingTitle || "");
+        setName(me.name || '')
+        setAvatarUrl(me.avatarUrl || '')
+        setWorkspaceName(currentWorkspace?.workspace.name || '')
+        setBrandingTitle(currentWorkspace?.workspace.brandingTitle || '')
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load settings",
-        );
+          err instanceof Error ? err.message : 'Failed to load settings'
+        )
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    load();
-  }, [accessToken, workspaceId]);
+    load()
+  }, [accessToken, workspaceId])
 
   const handleProfileSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessToken) return;
+    e.preventDefault()
+    if (!accessToken) return
 
-    setProfileErrors({});
-    setError("");
-    setSuccess("");
+    setProfileErrors({})
+    setError('')
+    setSuccess('')
 
     const parsed = updateProfileSchema.safeParse({
       name,
-      avatarUrl,
-    });
+      avatarUrl
+    })
 
     if (!parsed.success) {
       const fieldErrors = Object.fromEntries(
         parsed.error.issues.map((issue) => [
           String(issue.path[0]),
-          issue.message,
-        ]),
-      );
-      setProfileErrors(fieldErrors);
-      setError(parsed.error.issues[0]?.message || "Invalid input");
-      return;
+          issue.message
+        ])
+      )
+      setProfileErrors(fieldErrors)
+      setError(parsed.error.issues[0]?.message || 'Invalid input')
+      return
     }
 
     try {
-      setSavingProfile(true);
+      setSavingProfile(true)
 
-      const updated = await apiFetch<MeResponse>("/users/me", {
-        method: "PATCH",
+      const updated = await apiFetch<MeResponse>('/users/me', {
+        method: 'PATCH',
         token: accessToken,
         body: JSON.stringify({
           name: parsed.data.name,
-          avatarUrl: parsed.data.avatarUrl || null,
-        }),
-      });
+          avatarUrl: parsed.data.avatarUrl || null
+        })
+      })
 
-      setProfile(updated);
-      setSuccess("Profile updated successfully.");
-      toast.success("Profile updated successfully.");
+      setProfile(updated)
+      setSuccess('Profile updated successfully.')
+      toast.success('Profile updated successfully.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update profile";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to update profile'
+      setError(message)
+      toast.error(message)
     } finally {
-      setSavingProfile(false);
+      setSavingProfile(false)
     }
-  };
+  }
 
   const reloadDomains = async () => {
-    if (!accessToken || !workspaceId) return;
+    if (!accessToken || !workspaceId) return
 
     const items = await apiFetch<DomainItem[]>(`/workspaces/${workspaceId}/domains`, {
-      token: accessToken,
-    });
-    setDomains(items);
-  };
+      token: accessToken
+    })
+    setDomains(items)
+  }
 
   const loadDomainDiagnostics = async (domainId: string) => {
-    if (!accessToken || !workspaceId) return;
+    if (!accessToken || !workspaceId) return
 
     const diagnostics = await apiFetch<DomainDiagnostics>(
       `/workspaces/${workspaceId}/domains/${domainId}/diagnostics`,
       {
-        token: accessToken,
-      },
-    );
+        token: accessToken
+      }
+    )
 
     setDomainDiagnostics((prev) => ({
       ...prev,
-      [domainId]: diagnostics,
-    }));
-  };
+      [domainId]: diagnostics
+    }))
+  }
 
   const handleWorkspaceSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessToken || !workspaceId) return;
+    e.preventDefault()
+    if (!accessToken || !workspaceId) return
 
-    setWorkspaceErrors({});
-    setError("");
-    setSuccess("");
+    setWorkspaceErrors({})
+    setError('')
+    setSuccess('')
 
     const parsed = updateWorkspaceSchema.safeParse({
       name: workspaceName,
-      brandingTitle,
-    });
+      brandingTitle
+    })
 
     if (!parsed.success) {
       const fieldErrors = Object.fromEntries(
         parsed.error.issues.map((issue) => [
           String(issue.path[0]),
-          issue.message,
-        ]),
-      );
-      setWorkspaceErrors(fieldErrors);
-      setError(parsed.error.issues[0]?.message || "Invalid input");
-      return;
+          issue.message
+        ])
+      )
+      setWorkspaceErrors(fieldErrors)
+      setError(parsed.error.issues[0]?.message || 'Invalid input')
+      return
     }
 
     try {
-      setSavingWorkspace(true);
+      setSavingWorkspace(true)
 
-      const updated = await apiFetch<WorkspaceMembership["workspace"]>(
+      const updated = await apiFetch<WorkspaceMembership['workspace']>(
         `/workspaces/${workspaceId}`,
         {
-          method: "PATCH",
+          method: 'PATCH',
           token: accessToken,
           body: JSON.stringify({
             name: parsed.data.name,
-            brandingTitle: parsed.data.brandingTitle || "",
-          }),
-        },
-      );
+            brandingTitle: parsed.data.brandingTitle || ''
+          })
+        }
+      )
 
       setWorkspace((prev) =>
         prev
           ? {
               ...prev,
-              workspace: updated,
+              workspace: updated
             }
-          : prev,
-      );
+          : prev
+      )
 
-      setSuccess("Workspace updated successfully.");
-      toast.success("Workspace updated successfully.");
+      setSuccess('Workspace updated successfully.')
+      toast.success('Workspace updated successfully.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update workspace";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to update workspace'
+      setError(message)
+      toast.error(message)
     } finally {
-      setSavingWorkspace(false);
+      setSavingWorkspace(false)
     }
-  };
+  }
 
   const handleDomainCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessToken || !workspaceId || !customDomain.trim()) return;
+    e.preventDefault()
+    if (!accessToken || !workspaceId || !customDomain.trim()) return
 
     try {
-      setSavingDomain(true);
-      setError("");
-      setSuccess("");
+      setSavingDomain(true)
+      setError('')
+      setSuccess('')
 
       await apiFetch(`/workspaces/${workspaceId}/domains`, {
-        method: "POST",
+        method: 'POST',
         token: accessToken,
         body: JSON.stringify({
-          hostname: customDomain.trim(),
-        }),
-      });
+          hostname: customDomain.trim()
+        })
+      })
 
-      setCustomDomain("");
-      await reloadDomains();
-      setSuccess("Custom domain added. Point it to your app and open the verification path on that host.");
-      toast.success("Custom domain added.");
+      setCustomDomain('')
+      await reloadDomains()
+      setSuccess('Custom domain added. Point it to your app and open the verification path on that host.')
+      toast.success('Custom domain added.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to add custom domain";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to add custom domain'
+      setError(message)
+      toast.error(message)
     } finally {
-      setSavingDomain(false);
+      setSavingDomain(false)
     }
-  };
+  }
 
   const handleDeleteDomain = async (domainId: string) => {
-    if (!accessToken || !workspaceId) return;
-    if (!window.confirm("Remove this custom domain? Links using it will move back to the default domain.")) return;
+    if (!accessToken || !workspaceId) return
 
     try {
+      setDomainDeleteBusy(true)
       await apiFetch(`/workspaces/${workspaceId}/domains/${domainId}`, {
-        method: "DELETE",
-        token: accessToken,
-      });
+        method: 'DELETE',
+        token: accessToken
+      })
 
-      await reloadDomains();
-      toast.success("Custom domain removed.");
+      await reloadDomains()
+      setDomainToRemove(null)
+      toast.success('Custom domain removed.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to remove custom domain";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to remove custom domain'
+      setError(message)
+      toast.error(message)
+    } finally {
+      setDomainDeleteBusy(false)
     }
-  };
+  }
 
   const handleRefreshVerification = async (domainId: string) => {
-    if (!accessToken || !workspaceId) return;
+    if (!accessToken || !workspaceId) return
 
     try {
-      setDomainActionId(domainId);
+      setDomainActionId(domainId)
       await apiFetch(`/workspaces/${workspaceId}/domains/${domainId}/refresh-verification`, {
-        method: "POST",
-        token: accessToken,
-      });
+        method: 'POST',
+        token: accessToken
+      })
 
-      await reloadDomains();
-      await loadDomainDiagnostics(domainId);
-      toast.success("Verification instructions refreshed.");
+      await reloadDomains()
+      await loadDomainDiagnostics(domainId)
+      toast.success('Verification instructions refreshed.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to refresh verification";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to refresh verification'
+      setError(message)
+      toast.error(message)
     } finally {
-      setDomainActionId(null);
+      setDomainActionId(null)
     }
-  };
+  }
 
   const handleStatusUpdate = async (
     domainId: string,
-    status: "PENDING" | "DISABLED",
+    status: 'PENDING' | 'DISABLED'
   ) => {
-    if (!accessToken || !workspaceId) return;
+    if (!accessToken || !workspaceId) return
 
     try {
-      setDomainActionId(domainId);
+      setDomainActionId(domainId)
       await apiFetch(`/workspaces/${workspaceId}/domains/${domainId}/status`, {
-        method: "PATCH",
+        method: 'PATCH',
         token: accessToken,
-        body: JSON.stringify({ status }),
-      });
+        body: JSON.stringify({ status })
+      })
 
-      await reloadDomains();
-      await loadDomainDiagnostics(domainId);
+      await reloadDomains()
+      await loadDomainDiagnostics(domainId)
       toast.success(
-        status === "DISABLED"
-          ? "Domain disabled."
-          : "Domain moved back to pending verification.",
-      );
+        status === 'DISABLED'
+          ? 'Domain disabled.'
+          : 'Domain moved back to pending verification.'
+      )
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update domain status";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : 'Failed to update domain status'
+      setError(message)
+      toast.error(message)
     } finally {
-      setDomainActionId(null);
+      setDomainActionId(null)
     }
-  };
+  }
+
+  const copyVerificationUrl = async (item: DomainItem) => {
+    if (!item.verificationPath) return
+
+    await navigator.clipboard.writeText(`https://${item.hostname}${item.verificationPath}`)
+    toast.success('Verification URL copied.')
+  }
 
   if (loading) {
     return (
@@ -455,7 +471,7 @@ export default function SettingsPage() {
         <SkeletonCard />
         <SkeletonCard />
       </div>
-    );
+    )
   }
 
   return (
@@ -470,7 +486,7 @@ export default function SettingsPage() {
           <form onSubmit={handleProfileSave} className="mt-6 space-y-4">
             <TextField
               label="Email"
-              value={profile?.email || ""}
+              value={profile?.email || ''}
               onChange={() => {}}
               disabled
             />
@@ -481,11 +497,11 @@ export default function SettingsPage() {
                 <span
                   className={`rounded-full px-3 py-1 text-sm ${
                     profile?.emailVerified
-                      ? "bg-emerald-500/15 text-emerald-300"
-                      : "bg-amber-500/15 text-amber-300"
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-amber-500/15 text-amber-300'
                   }`}
                 >
-                  {profile?.emailVerified ? "Verified" : "Not verified"}
+                  {profile?.emailVerified ? 'Verified' : 'Not verified'}
                 </span>
 
                 {!profile?.emailVerified ? (
@@ -514,7 +530,7 @@ export default function SettingsPage() {
             />
 
             <Button type="submit" disabled={savingProfile}>
-              {savingProfile ? "Saving..." : "Save profile"}
+              {savingProfile ? 'Saving...' : 'Save profile'}
             </Button>
           </form>
         </Card>
@@ -542,7 +558,7 @@ export default function SettingsPage() {
             />
 
             <Button type="submit" disabled={savingWorkspace}>
-              {savingWorkspace ? "Saving..." : "Save workspace"}
+              {savingWorkspace ? 'Saving...' : 'Save workspace'}
             </Button>
             <div className="pt-2">
               <a
@@ -617,16 +633,16 @@ export default function SettingsPage() {
           />
 
           <Button type="submit" disabled={savingDomain}>
-            {savingDomain ? "Adding..." : "Add custom domain"}
+            {savingDomain ? 'Adding...' : 'Add custom domain'}
           </Button>
         </form>
 
         <div className="mt-6 space-y-4">
-          {domains.filter((item) => item.hostname !== "default").length === 0 ? (
+          {domains.filter((item) => item.hostname !== 'default').length === 0 ? (
             <p className="text-white/60">No custom domains yet.</p>
           ) : (
             domains
-              .filter((item) => item.hostname !== "default")
+              .filter((item) => item.hostname !== 'default')
               .map((item) => (
                 <div
                   key={item.id}
@@ -638,8 +654,8 @@ export default function SettingsPage() {
                       <p className="mt-1 text-sm text-white/55">
                         Status: {item.status}
                         {item.verifiedAt
-                          ? ` • Verified ${new Date(item.verifiedAt).toLocaleString()}`
-                          : ""}
+                          ? ` | Verified ${new Date(item.verifiedAt).toLocaleString()}`
+                          : ''}
                       </p>
                       <p className="mt-1 text-xs text-white/45">
                         Short URL base: https://{item.hostname}
@@ -661,10 +677,10 @@ export default function SettingsPage() {
                       >
                         Refresh verification
                       </Button>
-                      {item.status === "DISABLED" ? (
+                      {item.status === 'DISABLED' ? (
                         <Button
                           variant="secondary"
-                          onClick={() => handleStatusUpdate(item.id, "PENDING")}
+                          onClick={() => handleStatusUpdate(item.id, 'PENDING')}
                           disabled={domainActionId === item.id}
                         >
                           Re-enable
@@ -672,7 +688,7 @@ export default function SettingsPage() {
                       ) : (
                         <Button
                           variant="secondary"
-                          onClick={() => handleStatusUpdate(item.id, "DISABLED")}
+                          onClick={() => handleStatusUpdate(item.id, 'DISABLED')}
                           disabled={domainActionId === item.id}
                         >
                           Disable
@@ -680,7 +696,7 @@ export default function SettingsPage() {
                       )}
                       <Button
                         variant="secondary"
-                        onClick={() => handleDeleteDomain(item.id)}
+                        onClick={() => setDomainToRemove(item)}
                         disabled={domainActionId === item.id}
                       >
                         Remove
@@ -690,11 +706,22 @@ export default function SettingsPage() {
 
                   {item.verificationPath ? (
                     <div className="mt-3 rounded-2xl bg-slate-950/70 p-4 text-sm text-white/70">
-                      <p className="font-medium text-white">Verification URL</p>
-                      <p className="mt-2 break-all text-cyan-300">
-                        https://{item.hostname}
-                        {item.verificationPath}
-                      </p>
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <p className="font-medium text-white">Verification URL</p>
+                          <p className="mt-2 break-all text-cyan-300">
+                            https://{item.hostname}
+                            {item.verificationPath}
+                          </p>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          onClick={() => copyVerificationUrl(item)}
+                        >
+                          <Copy size={15} className="mr-2" />
+                          Copy URL
+                        </Button>
+                      </div>
                       <div className="mt-3 space-y-1 text-xs text-white/55">
                         <p>DNS target: {dnsTarget}</p>
                         <p>Open the URL above in your browser after the CNAME resolves.</p>
@@ -709,36 +736,61 @@ export default function SettingsPage() {
                           Links using domain: {domainDiagnostics[item.id].linkCount}
                         </span>
                         <span className="rounded-full bg-white/5 px-3 py-1">
-                          Assignment allowed: {domainDiagnostics[item.id].assignmentAllowed ? "Yes" : "No"}
+                          Assignment allowed: {domainDiagnostics[item.id].assignmentAllowed ? 'Yes' : 'No'}
                         </span>
                         <span className="rounded-full bg-white/5 px-3 py-1">
-                          DNS seen: {domainDiagnostics[item.id].verificationReady ? "Yes" : "No"}
+                          DNS ready: {domainDiagnostics[item.id].verificationReady ? 'Yes' : 'No'}
+                        </span>
+                        <span className="rounded-full bg-white/5 px-3 py-1">
+                          Safe to serve: {domainDiagnostics[item.id].canSafelyServeTraffic ? 'Yes' : 'No'}
                         </span>
                       </div>
 
                       <div className="mt-4 space-y-2">
                         <p className="font-medium text-white">DNS diagnostics</p>
                         <p>
-                          Expected target:{" "}
+                          Expected target:{' '}
                           <span className="text-cyan-300">
                             {domainDiagnostics[item.id].expectedTargetHost || dnsTarget}
                           </span>
                         </p>
                         <p>
-                          CNAME records:{" "}
+                          CNAME records:{' '}
                           {domainDiagnostics[item.id].dns.cnameRecords.length > 0
-                            ? domainDiagnostics[item.id].dns.cnameRecords.join(", ")
-                            : "None found"}
+                            ? domainDiagnostics[item.id].dns.cnameRecords.join(', ')
+                            : 'None found'}
                         </p>
                         <p>
-                          A records:{" "}
+                          A records:{' '}
                           {domainDiagnostics[item.id].dns.aRecords.length > 0
-                            ? domainDiagnostics[item.id].dns.aRecords.join(", ")
-                            : "None found"}
+                            ? domainDiagnostics[item.id].dns.aRecords.join(', ')
+                            : 'None found'}
                         </p>
                         <p>
-                          Points to expected target:{" "}
-                          {domainDiagnostics[item.id].dns.pointsToExpectedTarget ? "Yes" : "No"}
+                          AAAA records:{' '}
+                          {domainDiagnostics[item.id].dns.aaaaRecords.length > 0
+                            ? domainDiagnostics[item.id].dns.aaaaRecords.join(', ')
+                            : 'None found'}
+                        </p>
+                        <p>
+                          Target A records:{' '}
+                          {domainDiagnostics[item.id].dns.targetARecords.length > 0
+                            ? domainDiagnostics[item.id].dns.targetARecords.join(', ')
+                            : 'None found'}
+                        </p>
+                        <p>
+                          Target AAAA records:{' '}
+                          {domainDiagnostics[item.id].dns.targetAaaaRecords.length > 0
+                            ? domainDiagnostics[item.id].dns.targetAaaaRecords.join(', ')
+                            : 'None found'}
+                        </p>
+                        <p>
+                          Points to expected target:{' '}
+                          {domainDiagnostics[item.id].dns.pointsToExpectedTarget ? 'Yes' : 'No'}
+                        </p>
+                        <p>
+                          Recommended CNAME in place:{' '}
+                          {domainDiagnostics[item.id].dns.usesRecommendedCname ? 'Yes' : 'No'}
                         </p>
                       </div>
 
@@ -762,7 +814,7 @@ export default function SettingsPage() {
                             {domainDiagnostics[item.id].recommendations.map(
                               (recommendation) => (
                                 <p key={recommendation}>{recommendation}</p>
-                              ),
+                              )
                             )}
                           </div>
                         </div>
@@ -786,7 +838,7 @@ export default function SettingsPage() {
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
               <p className="text-xs text-white/50">Storage</p>
               <p className="mt-2 text-xl font-semibold uppercase">
-                {opsOverview?.storage.provider || "local"}
+                {opsOverview?.storage.provider || 'local'}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -814,11 +866,11 @@ export default function SettingsPage() {
                     <div>
                       <p className="font-medium text-white">{event.eventType}</p>
                       <p className="text-sm text-white/55">
-                        {event.recipient || "Unknown recipient"} via {event.provider}
+                        {event.recipient || 'Unknown recipient'} via {event.provider}
                       </p>
                     </div>
                     <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/70">
-                      {event.status || "received"}
+                      {event.status || 'received'}
                     </span>
                   </div>
                 </div>
@@ -853,14 +905,14 @@ export default function SettingsPage() {
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="font-medium text-white">{signal.kind.replace(/_/g, " ")}</p>
+                      <p className="font-medium text-white">{signal.kind.replace(/_/g, ' ')}</p>
                       <p className="text-sm text-white/55">
-                        {signal.hostname || "default domain"}
-                        {signal.path ? ` ${signal.path}` : ""}
+                        {signal.hostname || 'default domain'}
+                        {signal.path ? ` ${signal.path}` : ''}
                       </p>
                     </div>
                     <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-200">
-                      {signal.actionTaken || "flagged"}
+                      {signal.actionTaken || 'flagged'}
                     </span>
                   </div>
                 </div>
@@ -905,6 +957,35 @@ export default function SettingsPage() {
           </div>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={Boolean(domainToRemove)}
+        title="Remove custom domain"
+        description="Links using this hostname will move back to the default domain after removal."
+        confirmLabel="Remove domain"
+        cancelLabel="Keep domain"
+        tone="danger"
+        busy={domainDeleteBusy}
+        onCancel={() => {
+          if (!domainDeleteBusy) setDomainToRemove(null)
+        }}
+        onConfirm={() => {
+          if (domainToRemove) void handleDeleteDomain(domainToRemove.id)
+        }}
+        details={
+          domainToRemove ? (
+            <div className="space-y-2">
+              <p className="font-medium text-white">{domainToRemove.hostname}</p>
+              <p className="text-white/55">
+                Status: {domainToRemove.status}
+              </p>
+              <p className="text-white/55">
+                Short URL base: https://{domainToRemove.hostname}
+              </p>
+            </div>
+          ) : null
+        }
+      />
     </div>
-  );
+  )
 }

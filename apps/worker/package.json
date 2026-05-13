@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/worker.ts",
-    "build": "pnpm --filter @repo/db generate && tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "start": "node dist/worker.js"
   },
   "dependencies": {

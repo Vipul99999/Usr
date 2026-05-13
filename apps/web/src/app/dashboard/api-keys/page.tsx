@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { KeyRound, Copy, Trash2, Eye } from 'lucide-react'
+import { Activity, Copy, Eye, KeyRound, ShieldCheck, Trash2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { apiKeyScopeValues, createApiKeySchema } from '@/lib/validations/settings'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { FormMessage } from '@/components/ui/form-message'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SkeletonCard } from '@/components/ui/skeleton-card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/lib/hooks/use-toast'
 
 type ApiKeyItem = {
@@ -55,6 +56,8 @@ const scopeLabels: Record<(typeof apiKeyScopeValues)[number], string> = {
   'exports:write': 'Write exports'
 }
 
+const MASKED_KEY = '********************************'
+
 export default function ApiKeysPage() {
   const { accessToken, workspaceId, hydrate } = useAuthStore()
   const toast = useToast()
@@ -73,6 +76,8 @@ export default function ApiKeysPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [keyToRevoke, setKeyToRevoke] = useState<ApiKeyItem | null>(null)
+  const [revokeBusy, setRevokeBusy] = useState(false)
 
   useEffect(() => {
     hydrate()
@@ -167,9 +172,9 @@ export default function ApiKeysPage() {
 
   const handleRevoke = async (id: string) => {
     if (!accessToken || !workspaceId) return
-    if (!window.confirm('Revoke this API key?')) return
 
     try {
+      setRevokeBusy(true)
       setError('')
       setSuccess('')
 
@@ -180,11 +185,14 @@ export default function ApiKeysPage() {
 
       setSuccess('API key revoked.')
       toast.success('API key revoked.')
+      setKeyToRevoke(null)
       await load()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to revoke API key'
       setError(message)
       toast.error(message)
+    } finally {
+      setRevokeBusy(false)
     }
   }
 
@@ -194,6 +202,12 @@ export default function ApiKeysPage() {
     setSuccess('API key copied.')
     toast.success('API key copied.')
   }
+
+  const activeKeys = items.filter((item) => item.status !== 'REVOKED')
+  const totalRequests = activeKeys.reduce(
+    (sum, item) => sum + (usageByKey[item.id]?.requestsLast7Days || 0),
+    0
+  )
 
   if (loading) {
     return (
@@ -207,6 +221,52 @@ export default function ApiKeysPage() {
   return (
     <div className="grid gap-6">
       <FormMessage error={error} success={success} />
+
+      <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(103,232,249,0.1),rgba(8,19,36,0.92)_38%,rgba(8,19,36,0.98))] p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Machine access</p>
+            <h1 className="mt-4 text-3xl font-semibold">Secure integrations without overexposing your workspace.</h1>
+            <p className="mt-2 max-w-2xl text-white/64">
+              Create scoped API keys, review usage, and revoke access cleanly when an integration no longer needs it.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-white/65">
+            <span className="rounded-full bg-white/5 px-4 py-2">Active keys: {activeKeys.length}</span>
+            <span className="rounded-full bg-white/5 px-4 py-2">7-day requests: {totalRequests}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Safer by default</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            New API keys expire automatically after a safer default window unless you choose a shorter one through the API.
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <Activity className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Observe real usage</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            Each key tracks recent request counts and top routes so suspicious patterns are easier to spot.
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <KeyRound className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Scope the minimum</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            Give every integration only the scopes it needs so a leaked key has far less blast radius.
+          </p>
+        </div>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
@@ -225,7 +285,7 @@ export default function ApiKeysPage() {
               label="Key name"
               value={name}
               onChange={setName}
-              placeholder="Backend Integration"
+              placeholder="Backend integration"
               error={fieldErrors.name}
             />
 
@@ -279,7 +339,7 @@ export default function ApiKeysPage() {
               </div>
 
               <div className="mt-4 rounded-xl bg-slate-900 px-3 py-3 font-mono text-sm text-white">
-                {revealed ? newKey : '••••••••••••••••••••••••••••••'}
+                {revealed ? newKey : MASKED_KEY}
               </div>
             </div>
           )}
@@ -287,13 +347,15 @@ export default function ApiKeysPage() {
 
         <Card>
           <h3 className="text-xl font-semibold">API keys</h3>
-          <p className="mt-2 text-white/60">View active and revoked keys.</p>
+          <p className="mt-2 text-white/60">View active and revoked keys with scope and traffic context.</p>
 
           {items.length === 0 ? (
             <div className="mt-6">
               <EmptyState
                 title="No API keys yet"
                 description="Create your first API key when you need programmatic access."
+                actionLabel="Open settings"
+                actionHref="/dashboard/settings"
               />
             </div>
           ) : (
@@ -309,6 +371,9 @@ export default function ApiKeysPage() {
                     <p className="mt-1 text-xs text-white/45">
                       Created {new Date(item.createdAt).toLocaleDateString()}
                     </p>
+                    <p className="mt-1 text-xs text-white/45">
+                      Expires {item.expiresAt ? new Date(item.expiresAt).toLocaleDateString() : 'never'}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {item.scopes.map((scope) => (
                         <span key={scope} className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/70">
@@ -321,7 +386,7 @@ export default function ApiKeysPage() {
                       <div className="mt-2 flex flex-wrap gap-2">
                         {(usageByKey[item.id]?.topRoutes || []).slice(0, 3).map((route) => (
                           <span key={route.route} className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                            {route.route} · {route.requests}
+                            {route.route} | {route.requests}
                           </span>
                         ))}
                       </div>
@@ -335,7 +400,7 @@ export default function ApiKeysPage() {
 
                     {item.status !== 'REVOKED' && (
                       <button
-                        onClick={() => handleRevoke(item.id)}
+                        onClick={() => setKeyToRevoke(item)}
                         className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 px-3 py-2 text-sm text-red-300"
                       >
                         <Trash2 size={15} />
@@ -349,6 +414,33 @@ export default function ApiKeysPage() {
           )}
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(keyToRevoke)}
+        title="Revoke API key"
+        description="This integration will stop working immediately after revocation."
+        confirmLabel="Revoke key"
+        cancelLabel="Keep key"
+        tone="danger"
+        busy={revokeBusy}
+        onCancel={() => {
+          if (!revokeBusy) setKeyToRevoke(null)
+        }}
+        onConfirm={() => {
+          if (keyToRevoke) void handleRevoke(keyToRevoke.id)
+        }}
+        details={
+          keyToRevoke ? (
+            <div className="space-y-2">
+              <p className="font-medium text-white">{keyToRevoke.name}</p>
+              <p className="text-cyan-300">{keyToRevoke.keyPrefix}...</p>
+              <p className="text-white/55">
+                Scopes: {keyToRevoke.scopes.map((scope) => scopeLabels[scope as keyof typeof scopeLabels] || scope).join(', ')}
+              </p>
+            </div>
+          ) : null
+        }
+      />
     </div>
   )
 }

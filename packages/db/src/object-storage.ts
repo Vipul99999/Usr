@@ -74,13 +74,14 @@ async function bodyToBuffer(body: unknown): Promise<Buffer> {
   if (body instanceof Readable) {
     const chunks: Buffer[] = []
     for await (const chunk of body) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array | string))
     }
     return Buffer.concat(chunks)
   }
 
-  if (body && typeof body === 'object' && 'transformToByteArray' in body) {
-    const bytes = await (body as { transformToByteArray: () => Promise<Uint8Array> }).transformToByteArray()
+  const transformableBody = body as { transformToByteArray?: () => Promise<Uint8Array> } | null
+  if (transformableBody?.transformToByteArray) {
+    const bytes = await transformableBody.transformToByteArray()
     return Buffer.from(bytes)
   }
 

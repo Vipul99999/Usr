@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download } from 'lucide-react'
+import { Download, FileArchive, TimerReset } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { Card } from '@/components/ui/card'
@@ -65,6 +65,9 @@ export default function ExportsPage() {
   }
 
   const items = exportsQuery.data || []
+  const pending = items.filter((item) => item.status === 'PENDING' || item.status === 'PROCESSING').length
+  const completed = items.filter((item) => item.status === 'COMPLETED').length
+  const failed = items.filter((item) => item.status === 'FAILED').length
 
   const handleDownload = async (item: ExportJob) => {
     if (!accessToken || !workspaceId) return
@@ -98,63 +101,112 @@ export default function ExportsPage() {
   }
 
   return (
-    <Card>
-      <h1 className="text-2xl font-semibold">Export history</h1>
-      <p className="mt-2 text-white/60">Recent CSV export jobs for this workspace.</p>
-
-      <div className="mt-6 space-y-4">
-        {items.length === 0 ? (
-          <EmptyState
-            title="No exports yet"
-            description="Run your first export from the links page to see history here."
-          />
-        ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-medium text-white">{item.type}</p>
-                  <p className="mt-1 text-sm text-white/55">
-                    Created {new Date(item.createdAt).toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">
-                    {item.status}
-                  </span>
-
-                  {item.completedAt ? (
-                    <span className="text-sm text-white/45">
-                      Completed {new Date(item.completedAt).toLocaleString()}
-                    </span>
-                  ) : null}
-
-                  {item.status === 'COMPLETED' ? (
-                    <Button variant="secondary" onClick={() => handleDownload(item)}>
-                      <Download size={16} className="mr-2" />
-                      Download
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-
-              {item.errorMessage ? (
-                <p className="mt-3 text-sm text-red-300">Error: {item.errorMessage}</p>
-              ) : null}
-
-              {item.filtersJson ? (
-                <div className="mt-3 rounded-xl bg-slate-950/60 p-3 text-xs text-white/55">
-                  Filters: {JSON.stringify(item.filtersJson)}
-                </div>
-              ) : null}
-            </div>
-          ))
-        )}
+    <div className="grid gap-6">
+      <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(103,232,249,0.08),rgba(8,19,36,0.92)_40%,rgba(8,19,36,0.98))] p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Exports</p>
+            <h1 className="mt-4 text-3xl font-semibold">Keep reporting simple for your team.</h1>
+            <p className="mt-2 max-w-2xl text-white/64">
+              Track queued and completed export jobs, download finished files, and quickly spot anything that needs attention.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-white/65">
+            <span className="rounded-full bg-white/5 px-4 py-2">Queued: {pending}</span>
+            <span className="rounded-full bg-white/5 px-4 py-2">Completed: {completed}</span>
+            <span className="rounded-full bg-white/5 px-4 py-2">Failed: {failed}</span>
+          </div>
+        </div>
       </div>
-    </Card>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <FileArchive className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Async by design</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            Exports run in the worker so the dashboard stays responsive while larger files are being prepared.
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <TimerReset className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Check back when queued</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            If a job is still pending, refresh this page after a moment or inspect worker health from your operations setup.
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+          <div className="flex items-center gap-3">
+            <Download className="text-cyan-300" size={18} />
+            <p className="font-medium text-white">Download when ready</p>
+          </div>
+          <p className="mt-3 text-sm text-white/55">
+            Completed jobs stay available here so reporting and handoff are easier for non-technical teammates.
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <h1 className="text-2xl font-semibold">Export history</h1>
+        <p className="mt-2 text-white/60">Recent CSV export jobs for this workspace.</p>
+
+        <div className="mt-6 space-y-4">
+          {items.length === 0 ? (
+            <EmptyState
+              title="No exports yet"
+              description="Run your first export from the links page to see history here."
+            />
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-medium capitalize text-white">{item.type}</p>
+                    <p className="mt-1 text-sm text-white/55">
+                      Created {new Date(item.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">
+                      {item.status}
+                    </span>
+
+                    {item.completedAt ? (
+                      <span className="text-sm text-white/45">
+                        Completed {new Date(item.completedAt).toLocaleString()}
+                      </span>
+                    ) : null}
+
+                    {item.status === 'COMPLETED' ? (
+                      <Button variant="secondary" onClick={() => handleDownload(item)}>
+                        <Download size={16} className="mr-2" />
+                        Download
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {item.errorMessage ? (
+                  <p className="mt-3 text-sm text-red-300">Error: {item.errorMessage}</p>
+                ) : null}
+
+                {item.filtersJson ? (
+                  <div className="mt-3 rounded-xl bg-slate-950/60 p-3 text-xs text-white/55">
+                    Filters: {JSON.stringify(item.filtersJson)}
+                  </div>
+                ) : null}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+    </div>
   )
 }

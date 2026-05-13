@@ -42,7 +42,7 @@ test('custom domain verification and analytics overview work end to end', async 
   assert.equal(result.redirectLocation, 'https://example.com/custom-domain-test')
   assert.equal(result.topReferrer, 'news.ycombinator.com')
   assert.equal(result.topCountry, 'IN')
-  assert.match(result.recentClickDomain || '', /runtime\.test/)
+  assert.match(result.recentClickDomain || '', /nip\.io/)
   assert.match(result.recentClickSlug || '', /runtime-domain-/)
   assert.equal(result.recentClickDeviceType, 'mobile')
 

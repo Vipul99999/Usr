@@ -38,6 +38,10 @@ function makeRefreshToken() {
   return crypto.randomBytes(48).toString("hex");
 }
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 function makeWorkspaceSlug() {
   return `ws-${crypto.randomBytes(6).toString("hex")}`;
 }
@@ -56,7 +60,11 @@ private audit: AuditService
 }
 
   async register(input: unknown) {
-    const data = registerSchema.parse(input);
+    const parsed = registerSchema.parse(input);
+    const data = {
+      ...parsed,
+      email: normalizeEmail(parsed.email)
+    }
 
     const existing = await this.repo.findUserByEmail(data.email);
     if (existing) {
@@ -118,14 +126,18 @@ return sessionResult
   }
 
   async login(input: unknown, context?: { ipAddress?: string | null; userAgent?: string | null }) {
-    const data = loginSchema.parse(input);
+    const parsed = loginSchema.parse(input);
+    const data = {
+      ...parsed,
+      email: normalizeEmail(parsed.email)
+    }
     const lockKeys = [
       `auth:login:email:${data.email.toLowerCase()}`,
       context?.ipAddress ? `auth:login:ip:${context.ipAddress}` : null
     ].filter((value): value is string => Boolean(value))
 
     for (const key of lockKeys) {
-      const lockedUntil = securityGuard.getLock(key)
+      const lockedUntil = await securityGuard.getLock(key)
       if (lockedUntil) {
         await recordAbuseSignal(this.app, {
           source: 'auth',
@@ -145,18 +157,18 @@ return sessionResult
     const user = await this.repo.findUserByEmail(data.email);
 
     if (!user?.passwordHash) {
-      this.recordLoginFailure(data.email, context)
+      await this.recordLoginFailure(data.email, context)
       throw this.app.httpErrors.unauthorized("Invalid credentials");
     }
 
     const valid = await argon2.verify(user.passwordHash, data.password);
     if (!valid) {
-      this.recordLoginFailure(data.email, context)
+      await this.recordLoginFailure(data.email, context)
       throw this.app.httpErrors.unauthorized("Invalid credentials");
     }
 
     for (const key of lockKeys) {
-      securityGuard.clear(key)
+      await securityGuard.clear(key)
     }
 
     const membership = await this.repo.findFirstWorkspaceMembership(user.id);
@@ -258,7 +270,11 @@ return { success: true };
     };
   }
   async forgotPassword(input: unknown) {
-    const data = forgotPasswordSchema.parse(input);
+    const parsed = forgotPasswordSchema.parse(input);
+    const data = {
+      ...parsed,
+      email: normalizeEmail(parsed.email)
+    }
 
     const user = await this.repo.findUserByEmail(data.email);
 
@@ -322,7 +338,11 @@ return { success: true };
   }
 
   async resendVerification(input: unknown) {
-    const data = resendVerificationSchema.parse(input);
+    const parsed = resendVerificationSchema.parse(input);
+    const data = {
+      ...parsed,
+      email: normalizeEmail(parsed.email)
+    }
 
     const user = await this.repo.findUserByEmail(data.email);
 
@@ -418,12 +438,12 @@ await this.audit.log({
 return { success: true };
   }
 
-  private recordLoginFailure(email: string, context?: { ipAddress?: string | null; userAgent?: string | null }) {
+  private async recordLoginFailure(email: string, context?: { ipAddress?: string | null; userAgent?: string | null }) {
     for (const key of [
       `auth:login:email:${email.toLowerCase()}`,
       context?.ipAddress ? `auth:login:ip:${context.ipAddress}` : null
     ].filter((value): value is string => Boolean(value))) {
-      securityGuard.recordFailure({
+      await securityGuard.recordFailure({
         key,
         windowMs: env.AUTH_LOGIN_WINDOW_MS,
         maxAttempts: env.AUTH_LOGIN_MAX_ATTEMPTS,

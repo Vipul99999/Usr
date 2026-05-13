@@ -1,9 +1,15 @@
-import dns from 'node:dns/promises'
 import { DEFAULT_DOMAIN } from '@repo/shared'
 import type { FastifyInstance } from 'fastify'
 import { redirectCache } from '../../common/utils/link-cache.js'
 import { AuditService } from '../audit/audit.service.js'
-import { normalizeHostname, stripPortFromHost } from '../../common/utils/custom-domains.js'
+import {
+  expectedDomainTargetHost,
+  normalizeHostname,
+  pointsToExpectedTarget,
+  resolveDnsDiagnostics,
+  resolveTargetDiagnostics,
+  stripPortFromHost
+} from '../../common/utils/custom-domains.js'
 import { createDomainSchema, updateDomainStatusSchema } from './domains.schemas.js'
 import { DomainsRepository } from './domains.repository.js'
 
@@ -28,34 +34,10 @@ function toPublicDomain(domain: {
   }
 }
 
-function expectedDomainTargetHost() {
-  if (process.env.CUSTOM_DOMAIN_TARGET_HOST) {
-    return process.env.CUSTOM_DOMAIN_TARGET_HOST.toLowerCase()
-  }
-
-  try {
-    return new URL(process.env.API_URL || '').hostname.toLowerCase()
-  } catch {
-    return null
-  }
-}
-
 function configuredProtectedHosts() {
   return [process.env.API_URL, process.env.APP_URL, process.env.CUSTOM_DOMAIN_TARGET_HOST]
     .map((value) => stripPortFromHost(value))
     .filter((value): value is string => Boolean(value))
-}
-
-async function resolveDnsDiagnostics(hostname: string) {
-  const [cnameRecords, aRecords] = await Promise.all([
-    dns.resolveCname(hostname).catch(() => [] as string[]),
-    dns.resolve4(hostname).catch(() => [] as string[])
-  ])
-
-  return {
-    cnameRecords: cnameRecords.map((value) => value.toLowerCase()),
-    aRecords
-  }
 }
 
 export class DomainsService {
@@ -136,27 +118,31 @@ export class DomainsService {
       throw this.app.httpErrors.notFound('Custom domain not found')
     }
 
-    const [linkCount, dnsInfo] = await Promise.all([
-      this.repo.countLinksUsingDomain(workspaceId, domain.hostname),
-      resolveDnsDiagnostics(domain.hostname)
-    ])
     const targetHost = expectedDomainTargetHost()
-    const pointsToExpectedTarget =
-      !targetHost ||
-      dnsInfo.cnameRecords.includes(targetHost) ||
-      dnsInfo.cnameRecords.some((record) => record.endsWith(`.${targetHost}`))
+    const [linkCount, dnsInfo, targetDnsInfo] = await Promise.all([
+      this.repo.countLinksUsingDomain(workspaceId, domain.hostname),
+      resolveDnsDiagnostics(domain.hostname),
+      resolveTargetDiagnostics(targetHost)
+    ])
+    const matchesExpectedTarget = pointsToExpectedTarget(dnsInfo, targetDnsInfo, targetHost)
+    const usesRecommendedCname = !targetHost || dnsInfo.cnameRecords.includes(targetHost)
 
     const issues: string[] = []
     const recommendations: string[] = []
 
-    if (dnsInfo.cnameRecords.length === 0 && dnsInfo.aRecords.length === 0) {
+    if (dnsInfo.cnameRecords.length === 0 && dnsInfo.aRecords.length === 0 && dnsInfo.aaaaRecords.length === 0) {
       issues.push('No DNS records were resolved for this hostname yet.')
       recommendations.push('Create a DNS record for this hostname and wait for propagation.')
     }
 
-    if (targetHost && !pointsToExpectedTarget && dnsInfo.aRecords.length === 0) {
+    if (targetHost && !matchesExpectedTarget) {
       issues.push(`The hostname is not pointing at the expected target ${targetHost}.`)
       recommendations.push(`Point the hostname to ${targetHost} with a CNAME record.`)
+    }
+
+    if (targetHost && dnsInfo.cnameRecords.length === 0 && (dnsInfo.aRecords.length > 0 || dnsInfo.aaaaRecords.length > 0)) {
+      issues.push('This hostname uses direct A/AAAA records. For a startup deployment, a CNAME is safer and easier to maintain.')
+      recommendations.push(`Replace direct A/AAAA records with a CNAME to ${targetHost} unless your edge provider explicitly requires flattening.`)
     }
 
     if (domain.status === 'PENDING') {
@@ -167,16 +153,26 @@ export class DomainsService {
       recommendations.push('Re-enable the domain after fixing DNS or SSL configuration.')
     }
 
+    if (domain.status === 'VERIFIED' && !matchesExpectedTarget) {
+      issues.push('This domain was verified earlier, but current DNS no longer matches the expected target.')
+      recommendations.push('Disable the domain until DNS is corrected so campaign traffic does not break unexpectedly.')
+    }
+
     return {
       ...toPublicDomain(domain),
       linkCount,
       expectedTargetHost: targetHost,
-      verificationReady: dnsInfo.cnameRecords.length > 0 || dnsInfo.aRecords.length > 0,
-      assignmentAllowed: domain.status === 'VERIFIED',
+      verificationReady: matchesExpectedTarget,
+      assignmentAllowed: domain.status === 'VERIFIED' && matchesExpectedTarget,
+      canSafelyServeTraffic: domain.status === 'VERIFIED' && matchesExpectedTarget,
       dns: {
         cnameRecords: dnsInfo.cnameRecords,
         aRecords: dnsInfo.aRecords,
-        pointsToExpectedTarget
+        aaaaRecords: dnsInfo.aaaaRecords,
+        targetARecords: targetDnsInfo.aRecords,
+        targetAaaaRecords: targetDnsInfo.aaaaRecords,
+        pointsToExpectedTarget: matchesExpectedTarget,
+        usesRecommendedCname
       },
       issues,
       recommendations
@@ -307,14 +303,14 @@ export class DomainsService {
       throw this.app.httpErrors.notFound('Domain verification record not found')
     }
 
-    const dnsInfo = await resolveDnsDiagnostics(domain.hostname)
     const targetHost = expectedDomainTargetHost()
-    const pointsToExpectedTarget =
-      !targetHost ||
-      dnsInfo.cnameRecords.includes(targetHost) ||
-      dnsInfo.cnameRecords.some((record) => record.endsWith(`.${targetHost}`))
+    const [dnsInfo, targetDnsInfo] = await Promise.all([
+      resolveDnsDiagnostics(domain.hostname),
+      resolveTargetDiagnostics(targetHost)
+    ])
+    const matchesExpectedTarget = pointsToExpectedTarget(dnsInfo, targetDnsInfo, targetHost)
 
-    if (!pointsToExpectedTarget && dnsInfo.aRecords.length === 0) {
+    if (!matchesExpectedTarget) {
       throw this.app.httpErrors.badRequest('DNS is not pointing at the expected target yet')
     }
 

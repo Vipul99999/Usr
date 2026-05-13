@@ -1,5 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { describeObjectStorage } from '@repo/db'
+import {
+  expectedDomainTargetHost,
+  pointsToExpectedTarget,
+  resolveDnsDiagnostics,
+  resolveTargetDiagnostics
+} from '../../common/utils/custom-domains.js'
 
 export class OpsService {
   constructor(private app: FastifyInstance) {}
@@ -20,7 +26,7 @@ export class OpsService {
       throw this.app.httpErrors.forbidden('Access denied')
     }
 
-    const [pendingExports, failedExports, recentEmailEvents, recentAbuseSignals, domainSummary, activeApiKeys] =
+    const [pendingExports, failedExports, recentEmailEvents, recentAbuseSignals, domainSummary, activeApiKeys, recentApiKeyEvents, workspaceDomains] =
       await Promise.all([
         this.app.prisma.exportJob.count({
           where: {
@@ -76,8 +82,76 @@ export class OpsService {
             workspaceId,
             status: 'ACTIVE'
           }
+        }),
+        this.app.prisma.apiKeyRequestEvent.findMany({
+          where: {
+            apiKey: {
+              workspaceId
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 8,
+          select: {
+            id: true,
+            method: true,
+            route: true,
+            statusCode: true,
+            latencyMs: true,
+            createdAt: true,
+            apiKey: {
+              select: {
+                name: true,
+                keyPrefix: true
+              }
+            }
+          }
+        }),
+        this.app.prisma.workspaceDomain.findMany({
+          where: { workspaceId },
+          select: {
+            id: true,
+            hostname: true,
+            status: true,
+            verifiedAt: true
+          }
         })
       ])
+
+    const targetHost = expectedDomainTargetHost()
+    const targetDnsInfo = await resolveTargetDiagnostics(targetHost)
+    const domainDrift = await Promise.all(
+      workspaceDomains.map(async (domain) => {
+        const dns = await resolveDnsDiagnostics(domain.hostname)
+        const pointsCorrectly = pointsToExpectedTarget(dns, targetDnsInfo, targetHost)
+        const usesRecommendedCname = !targetHost || dns.cnameRecords.includes(targetHost)
+
+        const issues: string[] = []
+        if (!pointsCorrectly) {
+          issues.push('DNS no longer points to the expected target')
+        }
+
+        if (pointsCorrectly && !usesRecommendedCname && (dns.aRecords.length > 0 || dns.aaaaRecords.length > 0)) {
+          issues.push('Direct A/AAAA records detected instead of the recommended CNAME setup')
+        }
+
+        if (domain.status === 'VERIFIED' && !pointsCorrectly) {
+          issues.push('Verified domain may fail live traffic until DNS is corrected')
+        }
+
+        return {
+          id: domain.id,
+          hostname: domain.hostname,
+          status: domain.status,
+          verifiedAt: domain.verifiedAt,
+          pointsCorrectly,
+          usesRecommendedCname,
+          issueCount: issues.length,
+          issues
+        }
+      })
+    )
 
     return {
       storage: describeObjectStorage(),
@@ -91,7 +165,9 @@ export class OpsService {
         count: item._count.status
       })),
       recentEmailEvents,
-      recentAbuseSignals
+      recentAbuseSignals,
+      recentApiKeyEvents,
+      domainDrift
     }
   }
 }

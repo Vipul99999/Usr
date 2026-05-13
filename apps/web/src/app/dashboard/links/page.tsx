@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Download, Plus, QrCode, Search, Tag, Trash2, Copy, X, Pencil } from 'lucide-react'
+import { Copy, Download, Pencil, Plus, QrCode, Search, Tag, Trash2, X } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/lib/store/auth-store'
@@ -12,6 +12,7 @@ import { TextField } from '@/components/ui/text-field'
 import { FormMessage } from '@/components/ui/form-message'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SkeletonCard } from '@/components/ui/skeleton-card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/lib/hooks/use-toast'
 import { createLinkFormSchema, createTagFormSchema } from '@/lib/validations/links'
 import { buildShortUrl } from '@/lib/urls'
@@ -83,6 +84,8 @@ export default function LinksPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [qrSvg, setQrSvg] = useState('')
   const [qrUrl, setQrUrl] = useState('')
+  const [linkToDelete, setLinkToDelete] = useState<LinkItem | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   useEffect(() => {
     hydrate()
@@ -236,19 +239,22 @@ export default function LinksPage() {
 
   const handleDeleteLink = async (linkId: string) => {
     if (!accessToken || !workspaceId) return
-    if (!window.confirm('Delete this link?')) return
 
     try {
+      setDeleteBusy(true)
       await apiFetch(`/workspaces/${workspaceId}/links/${linkId}`, {
         method: 'DELETE',
         token: accessToken
       })
 
       toast.success('Link deleted.')
+      setLinkToDelete(null)
       await queryClient.invalidateQueries({ queryKey: ['links', workspaceId] })
       await queryClient.invalidateQueries({ queryKey: ['workspace-summary', workspaceId] })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete link')
+    } finally {
+      setDeleteBusy(false)
     }
   }
 
@@ -443,6 +449,16 @@ export default function LinksPage() {
               {submitting ? 'Creating...' : 'Create link'}
             </Button>
           </form>
+
+          <div className="mt-6 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-4">
+            <p className="text-sm font-medium text-cyan-200">Short link preview</p>
+            <p className="mt-2 break-all font-mono text-sm text-white">
+              {buildShortUrl(slug.trim() || 'your-slug', domain)}
+            </p>
+            <p className="mt-2 text-xs text-white/55">
+              Leave the slug empty if you want the system to generate one for you.
+            </p>
+          </div>
         </Card>
 
         <Card>
@@ -522,6 +538,13 @@ export default function LinksPage() {
               <Download size={16} className="mr-2" />
               Export CSV
             </Button>
+
+            <Link
+              href="/dashboard/exports"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/5"
+            >
+              View exports
+            </Link>
           </div>
         </div>
 
@@ -564,7 +587,10 @@ export default function LinksPage() {
                         Clicks: {link.totalClicks}
                       </span>
                       <span className="rounded-full bg-white/5 px-3 py-1">
-                        Campaign: {link.campaign || '—'}
+                        Unique: {link.uniqueClicks ?? 0}
+                      </span>
+                      <span className="rounded-full bg-white/5 px-3 py-1">
+                        Campaign: {link.campaign || 'Not set'}
                       </span>
                     </div>
 
@@ -618,7 +644,7 @@ export default function LinksPage() {
                     </button>
 
                     <button
-                      onClick={() => handleDeleteLink(link.id)}
+                      onClick={() => setLinkToDelete(link)}
                       className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"
                     >
                       <Trash2 size={15} />
@@ -632,37 +658,62 @@ export default function LinksPage() {
         )}
       </Card>
 
-      {qrModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-4 pb-4 pt-10 sm:items-center sm:px-6">
-    <div className="w-full max-w-lg rounded-[28px] border border-white/10 bg-slate-950 p-5 shadow-2xl sm:p-6">
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h3 className="text-xl font-semibold">QR Code</h3>
-          <p className="truncate text-sm text-white/55">{qrUrl}</p>
+      {qrModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-4 pb-4 pt-10 sm:items-center sm:px-6">
+          <div className="w-full max-w-lg rounded-[28px] border border-white/10 bg-slate-950 p-5 shadow-2xl sm:p-6">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="text-xl font-semibold">QR Code</h3>
+                <p className="truncate text-sm text-white/55">{qrUrl}</p>
+              </div>
+
+              <button
+                onClick={() => setQrModalOpen(false)}
+                className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/75"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              className="overflow-hidden rounded-2xl bg-white p-4"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button variant="secondary" onClick={() => setQrModalOpen(false)}>
+                Close
+              </Button>
+              <Button onClick={handleDownloadQr}>Download QR</Button>
+            </div>
+          </div>
         </div>
+      ) : null}
 
-        <button
-          onClick={() => setQrModalOpen(false)}
-          className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/75"
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      <div
-        className="overflow-hidden rounded-2xl bg-white p-4"
-        dangerouslySetInnerHTML={{ __html: qrSvg }}
+      <ConfirmDialog
+        open={Boolean(linkToDelete)}
+        title="Delete link"
+        description="This will remove the short link from active use and evict it from redirect cache."
+        confirmLabel="Delete link"
+        cancelLabel="Keep link"
+        tone="danger"
+        busy={deleteBusy}
+        onCancel={() => {
+          if (!deleteBusy) setLinkToDelete(null)
+        }}
+        onConfirm={() => {
+          if (linkToDelete) void handleDeleteLink(linkToDelete.id)
+        }}
+        details={
+          linkToDelete ? (
+            <div className="space-y-2">
+              <p className="font-medium text-white">{linkToDelete.title || linkToDelete.slug}</p>
+              <p className="truncate text-cyan-300">{buildShortUrl(linkToDelete.slug, linkToDelete.domain)}</p>
+              <p className="truncate text-white/55">{linkToDelete.destinationUrl}</p>
+            </div>
+          ) : null
+        }
       />
-
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button variant="secondary" onClick={() => setQrModalOpen(false)}>
-          Close
-        </Button>
-        <Button onClick={handleDownloadQr}>Download QR</Button>
-      </div>
-    </div>
-  </div>
-)}
     </div>
   )
 }

@@ -16,6 +16,9 @@ This folder contains the long-term documentation set for UrlShortener.
 - [deployment.md](D:\Projects_Components\url-shortener\docs\deployment.md)
   Deployment summary, operational expectations, and production setup pointers.
 
+- [CLOUDFLARE_VERCEL_RENDER_STACK.md](D:\Projects_Components\url-shortener\docs\CLOUDFLARE_VERCEL_RENDER_STACK.md)
+  Founder-recommended launch stack using Cloudflare, Vercel, Render, R2, and Redis.
+
 - [security.md](D:\Projects_Components\url-shortener\docs\security.md)
   Security model, threat surface, protections, and future hardening direction.
 
@@ -43,6 +46,9 @@ This folder contains the long-term documentation set for UrlShortener.
 - [DB_SCHEMA_REFERENCE.md](D:\Projects_Components\url-shortener\docs\DB_SCHEMA_REFERENCE.md)
 - [DEPLOYMENT_RUNBOOK.md](D:\Projects_Components\url-shortener\docs\DEPLOYMENT_RUNBOOK.md)
 - [PRODUCT_PRD_ROADMAP.md](D:\Projects_Components\url-shortener\docs\PRODUCT_PRD_ROADMAP.md)
+- [LAUNCH_CHECKLIST.md](D:\Projects_Components\url-shortener\docs\LAUNCH_CHECKLIST.md)
+- [CLOUDFLARE_VERCEL_RENDER_STACK.md](D:\Projects_Components\url-shortener\docs\CLOUDFLARE_VERCEL_RENDER_STACK.md)
+- [FIRST_TRAFFIC_PLAYBOOK.md](D:\Projects_Components\url-shortener\docs\FIRST_TRAFFIC_PLAYBOOK.md)
 
 ## Recommended Reading Order
 

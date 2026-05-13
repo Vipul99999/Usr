@@ -31,7 +31,7 @@ export const authPlugin = fp(async (app) => {
       }
 
       if (ipKey) {
-        const lockedUntil = securityGuard.getLock(ipKey)
+        const lockedUntil = await securityGuard.getLock(ipKey)
         if (lockedUntil) {
           await recordAbuseSignal(app, {
             source: 'api_key',
@@ -51,7 +51,7 @@ export const authPlugin = fp(async (app) => {
 
       const apiKey = await apiKeys.authenticateRawKey(apiKeyHeader)
       if (ipKey) {
-        securityGuard.clear(ipKey)
+        await securityGuard.clear(ipKey)
       }
       request.authUser = {
         userId: apiKey.createdById,
@@ -62,7 +62,7 @@ export const authPlugin = fp(async (app) => {
       }
     } catch {
       if (ipKey) {
-        securityGuard.recordFailure({
+        await securityGuard.recordFailure({
           key: ipKey,
           windowMs: env.API_KEY_INVALID_WINDOW_MS,
           maxAttempts: env.API_KEY_INVALID_MAX_ATTEMPTS,

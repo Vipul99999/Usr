@@ -55,6 +55,22 @@ export class AnalyticsRepository {
     })
   }
 
+  getWorkspaceSummary(workspaceId: string) {
+    return this.app.prisma.link.aggregate({
+      where: {
+        workspaceId,
+        deletedAt: null
+      },
+      _count: {
+        id: true
+      },
+      _sum: {
+        totalClicks: true,
+        uniqueClicks: true
+      }
+    })
+  }
+
   listTopLinks(workspaceId: string, limit = 5) {
     return this.app.prisma.link.findMany({
       where: {

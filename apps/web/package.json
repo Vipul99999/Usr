@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "node ../../scripts/clean-web-build.mjs && next build",
     "start": "next start --port 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "node ../../scripts/clean-web-build.mjs && tsc --noEmit"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.49.0",

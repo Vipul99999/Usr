@@ -241,26 +241,42 @@ export class RedirectsService {
       throw error
     }
 
-    await enqueueJob(this.app.prisma, {
-      kind: JOB_KIND.PROCESS_CLICK_EVENT,
-      payload: {
-        linkId: link.id,
-        clickedAt: new Date().toISOString(),
-        ipHash,
-        referrer: metadata.referrer,
-        userAgent: metadata.userAgent,
-        country: metadata.country,
-        city: metadata.city,
-        suspiciousUserAgent
-      } as Prisma.InputJsonValue
-    })
+    try {
+      await enqueueJob(this.app.prisma, {
+        kind: JOB_KIND.PROCESS_CLICK_EVENT,
+        payload: {
+          linkId: link.id,
+          clickedAt: new Date().toISOString(),
+          ipHash,
+          referrer: metadata.referrer,
+          userAgent: metadata.userAgent,
+          country: metadata.country,
+          city: metadata.city,
+          suspiciousUserAgent
+        } as Prisma.InputJsonValue
+      })
+    } catch (error) {
+      this.app.log.error(
+        {
+          err: error,
+          linkId: link.id,
+          domain,
+          slug
+        },
+        'Failed to enqueue click analytics job'
+      )
+    }
 
     return link
   }
 
   async resolveDefault(slug: string, metadata: ClickMetadata, hostHeader?: string | null) {
     const hostname = stripPortFromHost(hostHeader)
-    const domain = isDefaultShortDomain(hostname, [process.env.API_URL ?? '', process.env.APP_URL ?? ''])
+    const domain = isDefaultShortDomain(hostname, [
+      process.env.API_URL ?? '',
+      process.env.APP_URL ?? '',
+      process.env.CUSTOM_DOMAIN_TARGET_HOST ?? ''
+    ])
       ? DEFAULT_DOMAIN
       : hostname ?? DEFAULT_DOMAIN
 

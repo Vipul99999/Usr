@@ -88,6 +88,12 @@ export default function RegisterPage() {
               Set up your team, brand your short URLs, and start tracking campaigns in minutes.
             </p>
 
+            <div className="mt-6 flex flex-wrap gap-2 text-xs text-white/65">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">3 minute setup</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Invite teammates later</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Works on mobile</span>
+            </div>
+
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <TextField
                 label="Name"
@@ -163,6 +169,13 @@ export default function RegisterPage() {
                   Async jobs, exports, abuse signals, and worker health keep the product stable under real use.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-8 rounded-3xl border border-white/10 bg-black/15 p-5">
+              <p className="text-sm text-white/50">Best first workflow</p>
+              <p className="mt-2 text-white/75">
+                Create one campaign link, copy it, share it, then come back to analytics once your first clicks land.
+              </p>
             </div>
           </div>
         </div>

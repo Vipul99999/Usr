@@ -2,9 +2,47 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Providers } from './providers'
 
+const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_SHORT_URL_BASE || 'http://localhost:3000'
+
 export const metadata: Metadata = {
-  title: 'UrlShortener',
-  description: 'Business link management platform'
+  metadataBase: new URL(appUrl),
+  title: {
+    default: 'UrlShortener | Short links, campaign analytics, and teamwork',
+    template: '%s | UrlShortener'
+  },
+  description:
+    'Create branded short links, monitor campaign performance, invite teammates, and ship faster with a link platform built for modern startups.',
+  applicationName: 'UrlShortener',
+  keywords: [
+    'URL shortener',
+    'link analytics',
+    'custom domains',
+    'campaign tracking',
+    'short links',
+    'QR codes',
+    'startup SaaS'
+  ],
+  alternates: {
+    canonical: '/'
+  },
+  openGraph: {
+    title: 'UrlShortener',
+    description:
+      'Create branded short links, monitor campaign performance, and collaborate with your team in one focused workspace.',
+    url: appUrl,
+    siteName: 'UrlShortener',
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UrlShortener',
+    description:
+      'Create branded short links, track clicks, and manage campaigns with a fast startup-friendly link platform.'
+  },
+  robots: {
+    index: true,
+    follow: true
+  }
 }
 
 export default function RootLayout({

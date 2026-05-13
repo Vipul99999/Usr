@@ -84,6 +84,7 @@ export default function Page() {
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute right-0 top-40 h-[360px] w-[360px] rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute left-0 top-[32rem] h-[300px] w-[300px] rounded-full bg-amber-500/10 blur-3xl" />
       </div>
 
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
@@ -123,11 +124,17 @@ export default function Page() {
       <main className="mx-auto max-w-7xl px-6 pb-24 lg:px-10">
         <section className="grid items-center gap-10 pb-20 pt-10 lg:grid-cols-[1.15fr_0.85fr] lg:pb-28 lg:pt-20">
           <div>
+            <div className="mb-4 flex flex-wrap gap-2 text-xs text-white/65 sm:text-sm">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Custom domains</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">QR codes</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Team workspaces</span>
+            </div>
+
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
               Built for modern teams and campaigns
             </div>
 
-            <h2 className="max-w-4xl text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
+            <h2 className="max-w-4xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Short links that look sharp, move fast, and convert better.
             </h2>
 
@@ -218,6 +225,17 @@ export default function Page() {
                     ))}
                   </div>
                 </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm text-white/50">Most active country</p>
+                    <p className="mt-2 text-lg font-semibold">India</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm text-white/50">Top source</p>
+                    <p className="mt-2 text-lg font-semibold">Newsletter</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -305,7 +323,7 @@ export default function Page() {
                 key={item.name}
                 className="rounded-[28px] border border-white/10 bg-white/5 p-6"
               >
-                <p className="leading-7 text-white/75">“{item.quote}”</p>
+                <p className="leading-7 text-white/75">&ldquo;{item.quote}&rdquo;</p>
                 <div className="mt-6">
                   <p className="font-semibold text-white">{item.name}</p>
                   <p className="text-sm text-white/50">{item.role}</p>

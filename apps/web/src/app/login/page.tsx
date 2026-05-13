@@ -80,6 +80,12 @@ export default function LoginPage() {
               make sense at a glance.
             </p>
 
+            <div className="mt-6 flex flex-wrap gap-2 text-xs text-white/65">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Branded links</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Abuse protection</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Export-ready</span>
+            </div>
+
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               <div className="rounded-3xl border border-white/10 bg-black/15 p-5">
                 <p className="text-xs uppercase tracking-[0.25em] text-white/45">Fast redirect</p>
@@ -145,6 +151,9 @@ export default function LoginPage() {
                 <Link href="/resend-verification" className="text-cyan-300 hover:text-cyan-200">
                   Resend verification
                 </Link>
+              </p>
+              <p className="text-white/45">
+                Best on mobile too: create, copy, and share links without needing the full desktop dashboard.
               </p>
             </div>
           </div>

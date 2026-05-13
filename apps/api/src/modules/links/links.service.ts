@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { Prisma } from '@repo/db'
 import { DEFAULT_DOMAIN } from "@repo/shared";
 import { createLinkSchema, updateLinkSchema } from "./links.schemas.js";
 import { generateSlug } from "./slug.util.js";
@@ -45,6 +46,25 @@ export class LinksService {
     this.domains = new DomainsService(app)
   }
 
+  private async resolveAvailableSlug(domain: string, preferredSlug?: string) {
+    let slug = preferredSlug ?? generateSlug()
+
+    for (let i = 0; i < 25; i += 1) {
+      const exists = await this.repo.findByDomainAndSlug(domain, slug)
+      if (!exists) {
+        return slug
+      }
+
+      if (preferredSlug) {
+        throw this.app.httpErrors.conflict('That slug is already in use on the selected domain')
+      }
+
+      slug = generateSlug()
+    }
+
+    throw this.app.httpErrors.conflict('Unable to generate a unique slug right now. Please try again.')
+  }
+
   async create(workspaceId: string, userId: string, input: unknown) {
     await this.ensureMembership(workspaceId, userId);
 
@@ -55,13 +75,7 @@ export class LinksService {
     if (data.slug && RESERVED_SLUGS.has(data.slug.toLowerCase())) {
       throw this.app.httpErrors.badRequest("Slug is reserved");
     }
-    let slug = data.slug ?? generateSlug();
-
-    for (let i = 0; i < 10; i++) {
-      const exists = await this.repo.findByDomainAndSlug(domain, slug);
-      if (!exists) break;
-      slug = generateSlug();
-    }
+    const slug = await this.resolveAvailableSlug(domain, data.slug)
 
     let normalizedUrl: string;
     try {
@@ -70,19 +84,27 @@ export class LinksService {
       throw this.app.httpErrors.badRequest("Invalid destination URL");
     }
 
-    const created = await this.repo.createLink({
-      workspaceId,
-      createdById: userId,
-      domain,
-      slug,
-      title: data.title,
-      destinationUrl: data.destinationUrl,
-      normalizedUrl,
-      description: data.description,
-      campaign: data.campaign,
-      expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-      redirectType: data.redirectType
-    })
+    let created
+    try {
+      created = await this.repo.createLink({
+        workspaceId,
+        createdById: userId,
+        domain,
+        slug,
+        title: data.title,
+        destinationUrl: data.destinationUrl,
+        normalizedUrl,
+        description: data.description,
+        campaign: data.campaign,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        redirectType: data.redirectType
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw this.app.httpErrors.conflict('That short link is already in use on this domain')
+      }
+      throw error
+    }
 
     await this.audit.log({
       workspaceId,
@@ -162,16 +184,30 @@ export class LinksService {
       }
     }
 
-    await this.repo.updateLink(linkId, {
-      domain,
-      title: data.title,
-      destinationUrl: data.destinationUrl,
-      normalizedUrl,
-      description: data.description,
-      campaign: data.campaign,
-      redirectType: data.redirectType,
-      expiresAt: data.expiresAt ? new Date(data.expiresAt) : data.expiresAt === null ? null : undefined
-    })
+    if (domain !== existing.domain) {
+      const slugConflict = await this.repo.findByDomainAndSlug(domain, existing.slug)
+      if (slugConflict && slugConflict.id !== existing.id) {
+        throw this.app.httpErrors.conflict('This domain already has a link using the same slug')
+      }
+    }
+
+    try {
+      await this.repo.updateLink(linkId, {
+        domain,
+        title: data.title,
+        destinationUrl: data.destinationUrl,
+        normalizedUrl,
+        description: data.description,
+        campaign: data.campaign,
+        redirectType: data.redirectType,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : data.expiresAt === null ? null : undefined
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw this.app.httpErrors.conflict('That short link is already in use on this domain')
+      }
+      throw error
+    }
 
     const fullLink = await this.repo.findLink(workspaceId, linkId)
     if (!fullLink) {

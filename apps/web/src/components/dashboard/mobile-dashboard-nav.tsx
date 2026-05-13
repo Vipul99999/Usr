@@ -8,6 +8,7 @@ import {
   House,
   KeyRound,
   Link2,
+  Shield,
   Settings,
   Users
 } from 'lucide-react'
@@ -17,6 +18,7 @@ const items = [
   { href: '/dashboard/links', label: 'Links', icon: Link2 },
   { href: '/dashboard/analytics', label: 'Stats', icon: BarChart3 },
   { href: '/dashboard/members', label: 'Team', icon: Users },
+  { href: '/dashboard/security', label: 'Security', icon: Shield },
   { href: '/dashboard/api-keys', label: 'Keys', icon: KeyRound },
   { href: '/dashboard/exports', label: 'Files', icon: FileText },
   { href: '/dashboard/settings', label: 'Prefs', icon: Settings }
@@ -27,7 +29,7 @@ export function MobileDashboardNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur lg:hidden">
-      <div className="grid grid-cols-7">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 py-3">
         {items.map((item) => {
           const Icon = item.icon
           const active =
@@ -38,8 +40,10 @@ export function MobileDashboardNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-3 text-[10px] ${
-                active ? 'text-cyan-300' : 'text-white/55'
+              className={`flex min-w-[78px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-3 text-[11px] transition ${
+                active
+                  ? 'border-cyan-300/30 bg-cyan-300/12 text-cyan-200'
+                  : 'border-white/10 bg-white/[0.03] text-white/55'
               }`}
             >
               <Icon size={16} />

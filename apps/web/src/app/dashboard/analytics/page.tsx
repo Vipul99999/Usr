@@ -142,6 +142,12 @@ export default function AnalyticsPage() {
   const topReferrer = summary.topReferrers[0]
   const topCountry = summary.countryBreakdown[0]
   const topDevice = summary.deviceBreakdown[0]
+  const returningClicks = Math.max(summary.totalClicks - summary.uniqueClicks, 0)
+  const returningShare =
+    summary.totalClicks > 0 ? Math.round((returningClicks / summary.totalClicks) * 100) : 0
+  const botClicks = summary.recentClicks.filter((item) => item.isBot).length
+  const botShare =
+    summary.recentClicks.length > 0 ? Math.round((botClicks / summary.recentClicks.length) * 100) : 0
 
   return (
     <div className="grid gap-6">
@@ -199,6 +205,38 @@ export default function AnalyticsPage() {
           <p className="mt-3 text-xl font-semibold capitalize text-white">{topDevice?.deviceType || 'Unknown'}</p>
           <p className="mt-2 text-sm text-white/55">
             {topDevice ? `${topDevice.clicks} clicks came from this device type.` : 'Your device mix will show up here once click events have been processed.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-white/50">Returning click share</p>
+          <p className="mt-3 text-3xl font-semibold text-white">{returningShare}%</p>
+          <p className="mt-2 text-sm text-white/55">
+            {returningClicks > 0
+              ? `${returningClicks} clicks came from repeat visitors, which is a useful signal for retention and recurring campaign engagement.`
+              : 'Once people start revisiting your links, repeat visitor share will show up here.'}
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-white/50">Recent bot pressure</p>
+          <p className="mt-3 text-3xl font-semibold text-white">{botShare}%</p>
+          <p className="mt-2 text-sm text-white/55">
+            {summary.recentClicks.length > 0
+              ? `${botClicks} of the last ${summary.recentClicks.length} tracked clicks were classified as bot-like traffic.`
+              : 'This stays quiet until recent click events are recorded.'}
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-white/50">Activation note</p>
+          <p className="mt-3 text-xl font-semibold text-white">
+            {summary.totalClicks > 0 ? 'Traffic is landing' : 'Push one real campaign'}
+          </p>
+          <p className="mt-2 text-sm text-white/55">
+            {summary.totalClicks > 0
+              ? 'You already have enough traffic to start refining channels, branded domains, and repeat visit quality.'
+              : 'Your next best move is to share one live short link so analytics, exports, and domain workflows start reflecting real behavior.'}
           </p>
         </div>
       </div>

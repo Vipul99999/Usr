@@ -412,3 +412,12 @@ pnpm dev:worker
 - DB schema reference: [docs/DB_SCHEMA_REFERENCE.md](D:\Projects_Components\url-shortener\docs\DB_SCHEMA_REFERENCE.md)
 - Product PRD and roadmap: [docs/PRODUCT_PRD_ROADMAP.md](D:\Projects_Components\url-shortener\docs\PRODUCT_PRD_ROADMAP.md)
 - deployment and incident runbook: [docs/DEPLOYMENT_RUNBOOK.md](D:\Projects_Components\url-shortener\docs\DEPLOYMENT_RUNBOOK.md)
+- recommended startup stack: [docs/CLOUDFLARE_VERCEL_RENDER_STACK.md](D:\Projects_Components\url-shortener\docs\CLOUDFLARE_VERCEL_RENDER_STACK.md)
+- launch checklist: [docs/LAUNCH_CHECKLIST.md](D:\Projects_Components\url-shortener\docs\LAUNCH_CHECKLIST.md)
+- first-traffic operations playbook: [docs/FIRST_TRAFFIC_PLAYBOOK.md](D:\Projects_Components\url-shortener\docs\FIRST_TRAFFIC_PLAYBOOK.md)
+
+## Deployment Configs
+
+- Render blueprint example: [deploy/render.yaml](D:\Projects_Components\url-shortener\deploy\render.yaml)
+- Vercel web config example: [deploy/vercel.json](D:\Projects_Components\url-shortener\deploy\vercel.json)
+- production env template: [.env.production.example](D:\Projects_Components\url-shortener\.env.production.example)

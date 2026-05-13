@@ -11,16 +11,12 @@ export class AnalyticsService {
   async getWorkspaceSummary(workspaceId: string, userId: string) {
     await this.ensureMembership(workspaceId, userId)
 
-    const links = await this.repo.listWorkspaceLinks(workspaceId)
-
-    const totalLinks = links.length
-    const totalClicks = links.reduce((sum, link) => sum + Number(link.totalClicks), 0)
-    const uniqueClicks = links.reduce((sum, link) => sum + Number(link.uniqueClicks), 0)
+    const summary = await this.repo.getWorkspaceSummary(workspaceId)
 
     return {
-      totalLinks,
-      totalClicks,
-      uniqueClicks
+      totalLinks: summary._count.id,
+      totalClicks: Number(summary._sum.totalClicks || 0),
+      uniqueClicks: Number(summary._sum.uniqueClicks || 0)
     }
   }
 

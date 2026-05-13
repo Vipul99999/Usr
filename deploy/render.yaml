@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: url-shortener-api
+    runtime: node
+    rootDir: .
+    buildCommand: pnpm install --frozen-lockfile && pnpm build:api
+    startCommand: pnpm start:api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+
+  - type: web
+    name: url-shortener-web
+    runtime: node
+    rootDir: .
+    buildCommand: pnpm install --frozen-lockfile && pnpm build:web
+    startCommand: pnpm start:web
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+
+  - type: worker
+    name: url-shortener-worker
+    runtime: node
+    rootDir: .
+    buildCommand: pnpm install --frozen-lockfile && pnpm build:worker
+    startCommand: pnpm start:worker
+    envVars:
+      - key: NODE_ENV
+        value: production

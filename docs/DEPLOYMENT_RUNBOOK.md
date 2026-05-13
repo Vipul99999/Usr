@@ -569,3 +569,4 @@ Before launch or major release:
 - project guide: [README.md](D:\Projects_Components\url-shortener\README.md)
 - system specification: [SRS.md](D:\Projects_Components\url-shortener\docs\SRS.md)
 - API routes and auth model: [API_REFERENCE.md](D:\Projects_Components\url-shortener\docs\API_REFERENCE.md)
+- recommended startup stack: [CLOUDFLARE_VERCEL_RENDER_STACK.md](D:\Projects_Components\url-shortener\docs\CLOUDFLARE_VERCEL_RENDER_STACK.md)

@@ -24,6 +24,7 @@ test.describe('dashboard flows', () => {
     await expect(page.getByText(/Create short link/i)).toBeVisible()
     await expect(page.getByText(/Create tag/i)).toBeVisible()
     await expect(page.getByText(/Your links/i)).toBeVisible()
+    await expect(page.getByText(/Short link preview/i)).toBeVisible()
   })
 
   test('settings page shows custom domain guidance and security review', async ({ page }) => {

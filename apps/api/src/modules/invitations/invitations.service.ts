@@ -26,6 +26,10 @@ function makeOneTimeToken() {
   return crypto.randomBytes(32).toString('hex')
 }
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase()
+}
+
 export class InvitationsService {
   private repo: InvitationsRepository
   private audit: AuditService
@@ -54,7 +58,11 @@ export class InvitationsService {
 
   async create(workspaceId: string, userId: string, input: unknown) {
     const adminMembership = await this.ensureAdmin(workspaceId, userId)
-    const data = createInvitationSchema.parse(input)
+    const parsed = createInvitationSchema.parse(input)
+    const data = {
+      ...parsed,
+      email: normalizeEmail(parsed.email)
+    }
 
     const existingUser = await this.repo.findUserByEmail(data.email)
     if (existingUser) {

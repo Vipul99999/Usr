@@ -1,11 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
+import { z } from 'zod'
 import { apiFetch } from '@/lib/api'
 import { TextField } from '@/components/ui/text-field'
 import { Button } from '@/components/ui/button'
 import { FormMessage } from '@/components/ui/form-message'
-import { z } from 'zod'
 
 const resendVerificationSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address')
@@ -52,29 +53,60 @@ export default function ResendVerificationPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
-        <h1 className="text-3xl font-semibold">Resend verification</h1>
-        <p className="mt-2 text-white/60">
-          Enter your email to receive a new verification link.
-        </p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 text-white">
+      <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(160deg,rgba(245,158,11,0.13),rgba(8,19,36,0.9)_34%,rgba(8,19,36,0.98))] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] lg:p-10">
+          <p className="text-sm uppercase tracking-[0.35em] text-amber-100/70">Verification</p>
+          <h1 className="mt-5 text-4xl font-semibold leading-tight">
+            Keep onboarding moving when the first email gets missed.
+          </h1>
+          <div className="mt-8 grid gap-4">
+            <div className="rounded-3xl border border-white/10 bg-black/15 p-5">
+              <p className="text-sm font-medium text-white">Inbox retry</p>
+              <p className="mt-2 text-white/62">
+                Users can request a fresh verification link without opening support tickets.
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-black/15 p-5">
+              <p className="text-sm font-medium text-white">Safer flow</p>
+              <p className="mt-2 text-white/62">
+                The response stays generic so this page doesn&apos;t leak whether an account exists.
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <TextField
-            label="Email"
-            value={email}
-            onChange={setEmail}
-            placeholder="you@example.com"
-            type="email"
-            error={fieldErrors.email}
-          />
+        <div className="rounded-[36px] border border-white/10 bg-[rgba(8,19,36,0.86)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur lg:p-10">
+          <p className="text-sm uppercase tracking-[0.3em] text-white/45">Resend verification</p>
+          <h2 className="mt-4 text-3xl font-semibold">Get a fresh email link</h2>
+          <p className="mt-3 text-white/60">
+            Enter your email to receive a new verification link.
+          </p>
 
-          <FormMessage error={error} success={success} />
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <TextField
+              label="Email"
+              value={email}
+              onChange={setEmail}
+              placeholder="you@example.com"
+              type="email"
+              error={fieldErrors.email}
+            />
 
-          <Button type="submit" disabled={loading} fullWidth>
-            {loading ? 'Sending...' : 'Resend verification email'}
-          </Button>
-        </form>
+            <FormMessage error={error} success={success} />
+
+            <Button type="submit" disabled={loading} fullWidth>
+              {loading ? 'Sending...' : 'Resend verification email'}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-sm text-white/58">
+            Already verified or ready to try again?{' '}
+            <Link href="/login" className="text-cyan-300 hover:text-cyan-200">
+              Go to login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -36,6 +36,7 @@ export async function buildApp() {
   initMonitoring()
   const app = Fastify({
     logger: true,
+    trustProxy: true,
   });
   
   if (process.env.NODE_ENV !== 'test') {
@@ -63,6 +64,23 @@ export async function buildApp() {
   await app.register(prismaPlugin);
   await app.register(jwtPlugin);
   await app.register(authPlugin);
+
+  app.addHook('onSend', async (request, reply, payload) => {
+    reply.header('X-Content-Type-Options', 'nosniff')
+    reply.header('X-Frame-Options', 'DENY')
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+    reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()')
+
+    if (env.NODE_ENV === 'production') {
+      reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+    }
+
+    if (request.url.startsWith('/auth') || request.url.startsWith('/users/me')) {
+      reply.header('Cache-Control', 'no-store')
+    }
+
+    return payload
+  })
 
   await redirectCache.verifyConnection()
 
