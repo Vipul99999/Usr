@@ -9,7 +9,15 @@ export class ExportsRepository {
         workspaceId,
         userId
       },
-      select: { id: true }
+      select: {
+        id: true,
+        workspace: {
+          select: {
+            id: true,
+            plan: true
+          }
+        }
+      }
     })
   }
 
@@ -75,6 +83,26 @@ export class ExportsRepository {
     })
   }
 
+  findInFlightCampaignExport(workspaceId: string, requestedById: string, campaign: string) {
+    return this.app.prisma.exportJob.findFirst({
+      where: {
+        workspaceId,
+        requestedById,
+        type: 'campaign_csv',
+        status: {
+          in: ['PENDING', 'PROCESSING']
+        },
+        filtersJson: {
+          path: ['campaign'],
+          equals: campaign
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+  }
+
   updateExportJob(
     exportId: string,
     data: {
@@ -90,6 +118,17 @@ export class ExportsRepository {
     return this.app.prisma.exportJob.update({
       where: { id: exportId },
       data
+    })
+  }
+
+  countExportsSince(workspaceId: string, since: Date) {
+    return this.app.prisma.exportJob.count({
+      where: {
+        workspaceId,
+        createdAt: {
+          gte: since
+        }
+      }
     })
   }
 }

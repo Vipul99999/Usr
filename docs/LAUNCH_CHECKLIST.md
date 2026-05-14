@@ -50,6 +50,30 @@ Use it as the go / no-go list before public release.
 - [ ] Logs are collected centrally
 - [ ] Uptime monitoring is enabled for web, API, and worker
 
+## 4.1 Recommended Startup Stack Validation
+
+Use this if you are deploying the recommended stack:
+
+- `Cloudflare` for DNS, CDN, SSL, and WAF
+- `Vercel` for web
+- `Render` for API
+- `Render` for worker
+- `Upstash Redis` for cache
+- `Cloudflare R2` for export storage
+
+Before launch, confirm:
+
+- [ ] `app.yourdomain.com` resolves to Vercel and serves over HTTPS
+- [ ] `api.yourdomain.com` resolves to Render and serves over HTTPS
+- [ ] `go.yourdomain.com` is routed through Cloudflare and reaches the redirect layer correctly
+- [ ] Cloudflare proxying is enabled for public app/api/short domains
+- [ ] Cloudflare WAF / rate-limit rules are enabled for auth and redirect abuse
+- [ ] Upstash `REDIS_URL` is configured and `/ready` does not show degraded cache reasons
+- [ ] R2 bucket credentials are configured and object storage provider reports `r2`
+- [ ] Worker service is deployed separately and its `/health` endpoint is live
+- [ ] Email provider webhook is reachable from the public internet
+- [ ] Production secrets are set separately for web, API, and worker
+
 ## 5. Browser Validation
 
 Run:
@@ -71,6 +95,7 @@ Expected coverage:
 - public landing and auth screens
 - dashboard shell
 - links workspace
+- campaign hub and weekly report views
 - settings/custom domain guidance
 - authenticated link creation flow
 
@@ -88,6 +113,8 @@ Do this on the deployed environment:
 8. Add and verify a custom domain
 9. Create and test an API key
 10. Confirm no Sentry flood or worker backlog
+11. Create one named campaign and open its weekly summary
+12. Queue one campaign-specific export
 
 Or run the scripted version:
 
@@ -122,3 +149,19 @@ Delay launch if:
 - exports are broken
 - monitoring is missing
 - Cloudflare/WAF rules are not in place for auth and redirect traffic
+
+## 8. First 24 Hours After Launch
+
+- [ ] Watch API `/ready` for degraded reasons
+- [ ] Watch worker `/health` for failed jobs or loop errors
+- [ ] Watch the dashboard security center for:
+  - [ ] dead-letter jobs
+  - [ ] retry build-up
+  - [ ] domain drift
+  - [ ] abuse signals
+- [ ] Confirm at least one real link receives clicks and analytics update correctly
+- [ ] Confirm no email delivery failures are stacking up
+- [ ] Confirm no export jobs are stuck in `PENDING` / `PROCESSING`
+- [ ] Confirm one campaign report and one shareable report page render correctly
+- [ ] Check Upstash command usage and adjust cache limits only if needed
+- [ ] Review Cloudflare analytics and tighten WAF rules from real traffic, not guesses

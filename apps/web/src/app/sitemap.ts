@@ -9,26 +9,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${appUrl}/`,
       lastModified: now,
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 1
-    },
-    {
-      url: `${appUrl}/login`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.7
-    },
-    {
-      url: `${appUrl}/register`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8
-    },
-    {
-      url: `${appUrl}/forgot-password`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.4
     }
   ]
 }

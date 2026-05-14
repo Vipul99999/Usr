@@ -167,75 +167,89 @@ export default function EditLinkPage() {
   }
 
   return (
-    <Card className="max-w-3xl">
-      <p className="text-sm text-white/50">Edit link</p>
-      <h1 className="mt-2 text-3xl font-semibold">
-        {linkQuery.data.title || linkQuery.data.slug}
-      </h1>
+    <div className="grid gap-6">
+      <div className="premium-panel-strong max-w-3xl rounded-[32px] bg-[linear-gradient(135deg,rgba(140,244,255,0.1),rgba(8,19,36,0.92)_40%,rgba(8,19,36,0.98))] p-6">
+        <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Link editing</p>
+        <h1 className="mt-4 text-3xl font-semibold">{linkQuery.data.title || linkQuery.data.slug}</h1>
+        <p className="mt-2 max-w-2xl text-white/64">
+          Update destination, campaign context, and branded domain without breaking the overall link experience.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <FormMessage error={formError} success={formSuccess} />
+      <Card className="max-w-3xl">
+        <p className="text-sm text-white/50">Edit link</p>
+        <h2 className="mt-2 text-3xl font-semibold">
+          Refine where this short URL points
+        </h2>
 
-        <TextField
-          label="Title"
-          value={title}
-          onChange={setTitle}
-          placeholder="Portfolio link"
-          error={errors.title}
-        />
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <FormMessage error={formError} success={formSuccess} />
 
-        <TextField
-          label="Destination URL"
-          value={destinationUrl}
-          onChange={setDestinationUrl}
-          placeholder="https://example.com"
-          error={errors.destinationUrl}
-        />
+          <TextField
+            label="Title"
+            value={title}
+            onChange={setTitle}
+            placeholder="Portfolio link"
+            error={errors.title}
+          />
 
-        <label className="block text-sm text-white/80">
-          <span className="mb-2 block">Short domain</span>
-          <select
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none"
-          >
-            {assignableDomains.map((item) => (
-              <option key={item.id} value={item.hostname}>
-                {item.hostname === 'default' ? 'Default domain' : item.hostname}
-                {item.status === 'VERIFIED' ? '' : ' (Pending verification)'}
-              </option>
-            ))}
-          </select>
-          {errors.domain ? (
-            <span className="mt-2 block text-sm text-red-300">{errors.domain}</span>
-          ) : null}
-          <span className="mt-2 block text-xs text-white/55">
-            Only verified domains can be assigned to links. Use Settings to check DNS and verification status.
-          </span>
-        </label>
+          <TextField
+            label="Destination URL"
+            value={destinationUrl}
+            onChange={setDestinationUrl}
+            placeholder="https://example.com"
+            error={errors.destinationUrl}
+          />
 
-        <TextField
-          label="Campaign"
-          value={campaign}
-          onChange={setCampaign}
-          placeholder="launch"
-          error={errors.campaign}
-        />
+          <label className="block text-sm text-white/80">
+            <span className="mb-2 block text-xs uppercase tracking-[0.24em] text-white/52">Short domain</span>
+            <select
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="w-full rounded-[20px] border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white outline-none transition focus:border-cyan-200/30 focus:ring-4 focus:ring-cyan-300/10"
+            >
+              {assignableDomains.map((item) => (
+                <option key={item.id} value={item.hostname}>
+                  {item.hostname === 'default' ? 'Default domain' : item.hostname}
+                  {item.status === 'VERIFIED' ? '' : ' (Pending verification)'}
+                </option>
+              ))}
+            </select>
+            {errors.domain ? (
+              <span className="mt-2 block text-sm text-red-300">{errors.domain}</span>
+            ) : null}
+            <span className="mt-2 block text-xs text-white/55">
+              Only verified domains can be assigned to links. Use Settings to check DNS and verification status.
+            </span>
+          </label>
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save changes'}
-          </Button>
+          <TextField
+            label="Campaign"
+            value={campaign}
+            onChange={setCampaign}
+            placeholder="launch"
+            error={errors.campaign}
+          />
 
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.push(`/dashboard/links/${params.linkId}`)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Card>
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm text-white/62">
+            Your slug stays consistent here. This edit flow is for destination quality, campaign context, and trusted domain presentation.
+          </div>
+
+          <div className="flex gap-3">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save changes'}
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => router.push(`/dashboard/links/${params.linkId}`)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
   )
 }

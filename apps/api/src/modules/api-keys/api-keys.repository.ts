@@ -14,7 +14,13 @@ export class ApiKeysRepository {
       },
       select: {
         id: true,
-        role: true
+        role: true,
+        workspace: {
+          select: {
+            id: true,
+            plan: true
+          }
+        }
       }
     })
   }
@@ -161,6 +167,19 @@ export class ApiKeysRepository {
         expiresAt: true,
         createdAt: true,
         revokedAt: true
+      }
+    })
+  }
+
+  countActiveApiKeys(workspaceId: string) {
+    return this.app.prisma.apiKey.count({
+      where: {
+        workspaceId,
+        status: 'ACTIVE',
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
       }
     })
   }

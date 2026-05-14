@@ -10,7 +10,22 @@ export class LinksRepository {
         userId
       },
       select: {
-        id: true
+        id: true,
+        workspace: {
+          select: {
+            id: true,
+            plan: true
+          }
+        }
+      }
+    })
+  }
+
+  countActiveLinks(workspaceId: string) {
+    return this.app.prisma.link.count({
+      where: {
+        workspaceId,
+        deletedAt: null
       }
     })
   }

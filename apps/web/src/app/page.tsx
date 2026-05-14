@@ -1,26 +1,44 @@
 import Link from 'next/link'
 import { CtaStrip } from '@/components/marketing/cta-strip'
 import type { Metadata } from 'next'
+import { MARKETED_WORKSPACE_PLANS } from '@/lib/plans'
 
 const pageUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_SHORT_URL_BASE || 'http://localhost:3000'
 
 export const metadata: Metadata = {
-  title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+  title: 'Branded URL Shortener for Startups, Campaign Teams, and Custom Domains',
   description:
-    'Create branded short links, track campaign clicks, generate QR codes, and manage team-ready workspaces from a premium startup-friendly dashboard.',
+    'Create branded short links, custom domains, QR codes, exports, and practical analytics from one premium workspace built for startups, agencies, and modern teams.',
+  keywords: [
+    'branded URL shortener',
+    'custom domain short links',
+    'startup link platform',
+    'campaign analytics short links',
+    'QR code campaign links',
+    'team URL shortener'
+  ],
   alternates: {
     canonical: '/'
   },
   openGraph: {
-    title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+    title: 'Branded URL Shortener for Startups, Campaign Teams, and Custom Domains',
     description:
-      'Launch short links fast, organize campaigns, and understand performance with clean, team-ready analytics.',
-    url: pageUrl
+      'Launch branded short links, organize campaigns, use custom domains, and understand performance from one focused workspace.',
+    url: pageUrl,
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'UrlShortener branded link platform'
+      }
+    ]
   },
   twitter: {
-    title: 'Branded URL Shortener for Teams, Campaigns, and Analytics',
+    title: 'Branded URL Shortener for Startups, Campaign Teams, and Custom Domains',
     description:
-      'Launch short links fast, organize campaigns, and understand performance with clean, team-ready analytics.'
+      'Create branded links, track campaign performance, share QR codes, and keep your team aligned from one clean workspace.',
+    images: ['/twitter-image']
   }
 }
 
@@ -29,53 +47,71 @@ export default function Page() {
     {
       title: 'Branded short links',
       description:
-        'Create clean, memorable links for campaigns, product launches, and team-wide sharing.'
+        'Create clean short URLs on your own domain for launches, newsletters, product drops, and client-facing campaigns.'
     },
     {
-      title: 'Fast analytics',
+      title: 'Practical analytics',
       description:
-        'Track clicks, trends, and performance from a dashboard built for action, not clutter.'
+        'Track clicks, referrers, countries, devices, and recent performance from dashboards that help you act, not over-analyze.'
     },
     {
-      title: 'Workspace-ready',
+      title: 'Team-ready workspaces',
       description:
-        'Organize links by workspace, campaign, and tags so teams can move quickly without losing control.'
+        'Use workspaces, members, tags, and campaign fields so link operations stay organized as your team grows.'
     },
     {
       title: 'QR and exports',
       description:
-        'Generate QR codes instantly and export data when you need to report or share results.'
+        'Generate QR codes fast and export clean reports when you need to share results internally or with clients.'
+    }
+  ]
+
+  const useCases = [
+    {
+      title: 'Startup marketing teams',
+      description:
+        'Run launches, newsletters, outbound campaigns, and paid traffic from one branded link workspace instead of scattered spreadsheets.'
+    },
+    {
+      title: 'Agencies and consultants',
+      description:
+        'Manage client campaigns with cleaner exports, clearer dashboards, and domain-level trust that feels professional from day one.'
+    },
+    {
+      title: 'Creators with real business workflows',
+      description:
+        'Use branded links and QR codes for bios, events, affiliate pushes, and offline promotions while keeping reporting simple.'
     }
   ]
 
   const stats = [
     { label: 'Link creation time', value: '< 10 sec' },
-    { label: 'Dashboard sections', value: '6 core views' },
-    { label: 'MVP business features', value: 'Tags + QR + CSV' }
+    { label: 'Workflow depth', value: 'Domains + QR + exports' },
+    { label: 'Team views', value: 'Links + analytics + security' }
   ]
 
   const steps = [
-    'Create a workspace and your first campaign link.',
-    'Share a short URL or QR code anywhere.',
-    'Track clicks, update destinations, and export results.'
+    'Create a branded link with your domain, slug, and campaign context.',
+    'Share it anywhere across web, social, offline, or client-facing surfaces.',
+    'Track what moved, export results, and keep your team aligned from one workspace.'
   ]
 
   const testimonials = [
     {
       quote:
-        'It gave us a much cleaner way to manage campaign links without enterprise-level complexity.',
+        'It gave us a cleaner branded-link workflow without forcing us into a heavy enterprise tool.',
       name: 'Aarav',
       role: 'Marketing Consultant'
     },
     {
       quote:
-        'The dashboard is simple, fast, and exactly what a small business team needs to ship quickly.',
+        'The dashboard feels fast, premium, and focused on the things our team actually checks every day.',
       name: 'Nisha',
       role: 'Growth Lead'
     },
     {
       quote:
-        'QR codes, exports, and tags in one place made it feel useful from day one.',
+        'Custom domains, QR codes, and exports made it feel useful from the first week, not just after setup.',
       name: 'Rohit',
       role: 'Operations Manager'
     }
@@ -83,20 +119,20 @@ export default function Page() {
 
   const faqs = [
     {
-      q: 'Is this good for small businesses?',
-      a: 'Yes. The MVP is designed around simple campaign tracking, clean short links, QR codes, and team-friendly organization.'
+      q: 'Is this good for small businesses and startups?',
+      a: 'Yes. It is built for startups, consultants, agencies, and small teams that want branded links, practical analytics, and cleaner collaboration without enterprise bloat.'
     },
     {
-      q: 'Can I use custom slugs?',
-      a: 'Yes. You can create memorable slugs for campaigns, landing pages, and branded sharing.'
+      q: 'Can I use custom slugs and branded domains?',
+      a: 'Yes. You can create memorable slugs and connect custom domains so short links feel more trustworthy and aligned with your brand.'
     },
     {
-      q: 'Does it support analytics?',
-      a: 'Yes. You can track clicks, see top-performing links, and review workspace-level performance.'
+      q: 'Does it support analytics that are actually useful?',
+      a: 'Yes. You can track clicks, top-performing links, recent performance, referrers, devices, and workspace-level trends.'
     },
     {
-      q: 'Can my team collaborate?',
-      a: 'Yes. Workspaces, members, invitations, and role-based access are part of the MVP flow.'
+      q: 'Can my team collaborate in one workspace?',
+      a: 'Yes. Workspaces, invitations, roles, exports, API keys, and operational visibility are built into the product flow.'
     }
   ]
 
@@ -124,17 +160,17 @@ export default function Page() {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'USD',
-        name: 'Starter'
+        name: 'Free'
       },
       {
         '@type': 'Offer',
-        price: '19',
+        price: '15',
         priceCurrency: 'USD',
         name: 'Pro'
       }
     ],
     description:
-      'A startup-friendly URL shortener for branded links, workspace collaboration, analytics, QR generation, and campaign organization.',
+      'A startup-friendly branded link platform for custom domains, workspace collaboration, analytics, QR generation, and campaign organization.',
     url: pageUrl,
     featureList: [
       'Branded short links',
@@ -144,6 +180,21 @@ export default function Page() {
       'Click analytics',
       'CSV exports'
     ]
+  }
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'UrlShortener',
+    url: pageUrl,
+    logo: `${pageUrl.replace(/\/+$/, '')}/icon`
+  }
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'UrlShortener',
+    url: pageUrl,
+    description:
+      'Branded URL shortener for custom domains, campaign analytics, QR codes, and team collaboration.'
   }
 
   return (
@@ -156,6 +207,15 @@ export default function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute right-0 top-40 h-[360px] w-[360px] rounded-full bg-indigo-500/20 blur-3xl" />
@@ -168,7 +228,7 @@ export default function Page() {
             U
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-white/45">Business link platform</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-white/45">Branded link platform</p>
             <h1 className="text-lg font-semibold">UrlShortener</h1>
           </div>
         </div>
@@ -206,16 +266,16 @@ export default function Page() {
             </div>
 
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-sm text-cyan-100">
-              Built for modern teams, campaign operators, and premium branded traffic
+              Built for startups, agencies, and modern teams that want branded traffic to feel premium
             </div>
 
             <h2 className="max-w-4xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Turn every short link into a sharper, more trusted brand touchpoint.
+              Branded links, campaign analytics, and team-ready sharing in one focused workspace.
             </h2>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Launch branded short URLs, organize campaign surfaces, generate QR codes, and track
-              performance from a link platform designed to feel editorial, operational, and premium from the first click.
+              Create short links with custom domains, QR codes, analytics, exports, and clean team
+              workflows from one platform designed for startups that need more than a basic shortener.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -223,26 +283,26 @@ export default function Page() {
                 href="/register"
                 className="rounded-2xl bg-cyan-400 px-6 py-3 text-center text-base font-semibold text-slate-950 shadow-2xl shadow-cyan-500/20 transition hover:scale-[1.02]"
               >
-                Create your first short link
+                Start your first branded link
               </Link>
 
               <Link
                 href="/login"
                 className="rounded-2xl border border-white/15 px-6 py-3 text-center text-base text-white/90 transition hover:bg-white/5"
               >
-                View dashboard preview
+                See the dashboard
               </Link>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm text-white/58">
               <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-200">
-                Launch-ready architecture
+                Custom domains included
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                Startup-friendly pricing
+                Team workspaces built in
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                Built for custom domains
+                Exports and QR from day one
               </span>
             </div>
 
@@ -264,7 +324,7 @@ export default function Page() {
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-white/40">Workspace</p>
-                  <h3 className="text-xl font-semibold">Spring Campaign</h3>
+                  <h3 className="text-xl font-semibold">Q2 Launch Campaign</h3>
                 </div>
                 <div className="rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-200">
                   Live
@@ -275,7 +335,7 @@ export default function Page() {
                 <div className="rounded-2xl bg-white/5 p-4">
                   <p className="text-sm text-white/50">Short URL</p>
                   <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="truncate font-medium text-cyan-300">go.brand.com/spring-launch</p>
+                    <p className="truncate font-medium text-cyan-300">go.brand.com/q2-launch</p>
                     <button className="rounded-xl bg-white/10 px-3 py-2 text-sm text-white/80">
                       Copy
                     </button>
@@ -288,8 +348,8 @@ export default function Page() {
                     <p className="mt-2 text-2xl font-semibold">12,842</p>
                   </div>
                   <div className="rounded-2xl bg-white/5 p-4">
-                    <p className="text-sm text-white/50">CTR lift</p>
-                    <p className="mt-2 text-2xl font-semibold">+18%</p>
+                    <p className="text-sm text-white/50">Repeat traffic</p>
+                    <p className="mt-2 text-2xl font-semibold">31%</p>
                   </div>
                   <div className="rounded-2xl bg-white/5 p-4">
                     <p className="text-sm text-white/50">QR scans</p>
@@ -320,7 +380,7 @@ export default function Page() {
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-sm text-white/50">Top source</p>
-                    <p className="mt-2 text-lg font-semibold">Newsletter</p>
+                    <p className="mt-2 text-lg font-semibold">Launch newsletter</p>
                   </div>
                 </div>
               </div>
@@ -348,11 +408,11 @@ export default function Page() {
           <div className="mb-10 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">Features</p>
             <h3 className="mt-3 text-3xl font-semibold tracking-tight">
-              Everything small teams need to launch fast
+              Everything a lean team needs to ship branded links well
             </h3>
             <p className="mt-4 text-white/65">
-              Focus on the features that matter most in an MVP business shortener: clarity,
-              tracking, collaboration, and speed.
+              The product is strongest when short links are part of a real workflow: branding,
+              tracking, collaboration, exports, and faster decision-making.
             </p>
           </div>
 
@@ -369,15 +429,37 @@ export default function Page() {
           </div>
         </section>
 
+        <section className="pb-20">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">Use Cases</p>
+            <h3 className="mt-3 text-3xl font-semibold tracking-tight">
+              Built for teams that need more than a generic shortener
+            </h3>
+            <p className="mt-4 text-white/65">
+              This product shines when links are tied to real campaigns, real reporting, and real
+              brand trust, not one-off utility use.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {useCases.map((item) => (
+              <div key={item.title} className="premium-panel rounded-[28px] p-6">
+                <h4 className="text-xl font-semibold">{item.title}</h4>
+                <p className="mt-3 leading-7 text-white/65">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section id="how-it-works" className="grid gap-6 pb-20 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8">
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">How it works</p>
             <h3 className="mt-3 text-3xl font-semibold tracking-tight">
-              A smooth flow from creation to analytics
+              A clean path from link creation to campaign clarity
             </h3>
             <p className="mt-4 text-white/65">
-              Your product should feel effortless for first-time users. The onboarding and
-              first success moment matter more than advanced settings.
+              The best short-link products do not just shorten URLs. They make launch, sharing,
+              tracking, and reporting feel connected from the first use.
             </p>
           </div>
 
@@ -424,53 +506,54 @@ export default function Page() {
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8">
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">Pricing</p>
             <h3 className="mt-3 text-3xl font-semibold tracking-tight">
-              Start simple, grow into business use
+              Free to start. Pro when branded workflows become serious.
             </h3>
             <p className="mt-4 text-white/65">
-              Keep your MVP plan simple: a free tier to attract users and a pro plan for teams
-              that need branding, exports, and analytics.
+              Keep the launch offer simple: a real free plan for solo use, and a Pro plan for
+              teams that need custom domains, exports, collaboration, and deeper analytics.
             </p>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-8">
-              <p className="text-sm text-white/55">Starter</p>
-              <div className="mt-3 text-4xl font-semibold">Free</div>
-              <ul className="mt-6 space-y-3 text-white/70">
-                <li>Short links</li>
-                <li>Basic analytics</li>
-                <li>QR generation</li>
-                <li>Single workspace</li>
-              </ul>
-              <Link
-                href="/register"
-                className="mt-8 block w-full rounded-2xl border border-white/15 px-5 py-3 text-center text-white/90 transition hover:bg-white/5"
+            {MARKETED_WORKSPACE_PLANS.map((plan) => (
+              <div
+                key={plan.plan}
+                className={
+                  plan.plan === 'PRO'
+                    ? 'rounded-[32px] border border-cyan-300/30 bg-gradient-to-b from-cyan-400/10 to-transparent p-8 shadow-2xl shadow-cyan-500/10'
+                    : 'rounded-[32px] border border-white/10 bg-white/5 p-8'
+                }
               >
-                Start free
-              </Link>
-            </div>
-
-            <div className="rounded-[32px] border border-cyan-300/30 bg-gradient-to-b from-cyan-400/10 to-transparent p-8 shadow-2xl shadow-cyan-500/10">
-              <div className="mb-3 inline-flex rounded-full bg-cyan-300/15 px-3 py-1 text-sm text-cyan-200">
-                Best for teams
+                {plan.plan === 'PRO' ? (
+                  <div className="mb-3 inline-flex rounded-full bg-cyan-300/15 px-3 py-1 text-sm text-cyan-200">
+                    Best for teams
+                  </div>
+                ) : null}
+                <p className="text-sm text-white/55">{plan.label}</p>
+                <div className="mt-3 text-4xl font-semibold">
+                  {plan.price}
+                  {plan.plan === 'PRO' ? (
+                    <span className="text-lg text-white/50">/mo</span>
+                  ) : null}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-white/60">{plan.summary}</p>
+                <ul className="mt-6 space-y-3 text-white/80">
+                  {plan.highlights.map((highlight) => (
+                    <li key={highlight}>{highlight}</li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                  className={
+                    plan.plan === 'PRO'
+                      ? 'mt-8 block w-full rounded-2xl bg-cyan-400 px-5 py-3 text-center font-semibold text-slate-950 transition hover:scale-[1.02]'
+                      : 'mt-8 block w-full rounded-2xl border border-white/15 px-5 py-3 text-center text-white/90 transition hover:bg-white/5'
+                  }
+                >
+                  {plan.cta}
+                </Link>
               </div>
-              <p className="text-sm text-white/55">Pro</p>
-              <div className="mt-3 text-4xl font-semibold">
-                $19<span className="text-lg text-white/50">/mo</span>
-              </div>
-              <ul className="mt-6 space-y-3 text-white/80">
-                <li>Tags and campaign organization</li>
-                <li>CSV exports</li>
-                <li>Workspace collaboration</li>
-                <li>Premium dashboard experience</li>
-              </ul>
-              <Link
-                href="/register"
-                className="mt-8 block w-full rounded-2xl bg-cyan-400 px-5 py-3 text-center font-semibold text-slate-950 transition hover:scale-[1.02]"
-              >
-                Upgrade to Pro
-              </Link>
-            </div>
+            ))}
           </div>
         </section>
 

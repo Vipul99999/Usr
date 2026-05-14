@@ -9,4 +9,10 @@ export class OpsController {
     const result = await this.service.getWorkspaceOverview(workspaceId, request.authUser.userId)
     return reply.send(result)
   }
+
+  retryFailedJob = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { workspaceId, jobId } = request.params as { workspaceId: string; jobId: string }
+    const result = await this.service.retryFailedJob(workspaceId, request.authUser.userId, jobId)
+    return reply.send(result)
+  }
 }

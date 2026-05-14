@@ -697,17 +697,30 @@ export async function runCustomDomainAnalyticsSimulation() {
     await waitForHttp('http://127.0.0.1:4102/health')
 
     const authContext = await ensureRuntimeUser()
+    const runtimeWorkspace = await prisma.workspace.create({
+      data: {
+        name: `Runtime Domain Workspace ${Date.now()}`,
+        slug: `runtime-domain-${Date.now()}`
+      }
+    })
+    await prisma.workspaceMember.create({
+      data: {
+        workspaceId: runtimeWorkspace.id,
+        userId: authContext.userId,
+        role: 'OWNER'
+      }
+    })
     const accessToken = app.jwt.sign({
       sub: authContext.userId,
       sessionId: 'runtime-session',
-      workspaceId: authContext.workspaceId
+      workspaceId: runtimeWorkspace.id
     })
 
     const createDomainBody = JSON.stringify({ hostname: customHostname })
     const domainResponse = await requestHttp({
       port: 4102,
       method: 'POST',
-      path: `/workspaces/${authContext.workspaceId}/domains`,
+      path: `/workspaces/${runtimeWorkspace.id}/domains`,
       headers: {
         authorization: `Bearer ${accessToken}`,
         'content-type': 'application/json',
@@ -762,7 +775,7 @@ export async function runCustomDomainAnalyticsSimulation() {
     const linkResponse = await requestHttp({
       port: 4102,
       method: 'POST',
-      path: `/workspaces/${authContext.workspaceId}/links`,
+      path: `/workspaces/${runtimeWorkspace.id}/links`,
       headers: {
         authorization: `Bearer ${accessToken}`,
         'content-type': 'application/json',
@@ -814,7 +827,7 @@ export async function runCustomDomainAnalyticsSimulation() {
     const overviewResponse = await requestHttp({
       port: 4102,
       method: 'GET',
-      path: `/workspaces/${authContext.workspaceId}/analytics/overview`,
+      path: `/workspaces/${runtimeWorkspace.id}/analytics/overview`,
       headers: {
         authorization: `Bearer ${accessToken}`
       }

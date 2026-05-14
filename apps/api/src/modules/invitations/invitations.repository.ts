@@ -27,7 +27,8 @@ export class InvitationsRepository {
           select: {
             id: true,
             name: true,
-            slug: true
+            slug: true,
+            plan: true
           }
         }
       }
@@ -209,6 +210,26 @@ export class InvitationsRepository {
       })
 
       return invitation
+    })
+  }
+
+  countWorkspaceMembers(workspaceId: string) {
+    return this.app.prisma.workspaceMember.count({
+      where: { workspaceId }
+    })
+  }
+
+  countPendingInvitations(workspaceId: string) {
+    return this.app.prisma.invitation.count({
+      where: {
+        workspaceId,
+        status: 'PENDING',
+        revokedAt: null,
+        acceptedAt: null,
+        expiresAt: {
+          gt: new Date()
+        }
+      }
     })
   }
 }

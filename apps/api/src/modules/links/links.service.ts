@@ -9,6 +9,7 @@ import { RESERVED_SLUGS } from "../../common/utils/reserved-slugs.js";
 import { AuditService } from '../audit/audit.service.js'
 import { redirectCache } from '../../common/utils/link-cache.js'
 import { DomainsService } from '../domains/domains.service.js'
+import { assertLimit, getWorkspacePlanLimits } from '../../common/utils/workspace-plan-limits.js'
 
 function toPublicLink(link: {
   totalClicks: bigint
@@ -66,7 +67,23 @@ export class LinksService {
   }
 
   async create(workspaceId: string, userId: string, input: unknown) {
-    await this.ensureMembership(workspaceId, userId);
+    const membership = await this.ensureMembership(workspaceId, userId);
+    const [activeLinks] = await Promise.all([
+      this.repo.countActiveLinks(workspaceId)
+    ])
+    const limits = getWorkspacePlanLimits(membership.workspace.plan)
+    try {
+      assertLimit({
+        current: activeLinks,
+        limit: limits.links,
+        resourceLabel: 'active links',
+        upgradeMessage: 'Free workspaces can keep up to 100 active links. Upgrade to Pro for unlimited branded links.'
+      })
+    } catch (error) {
+      throw this.app.httpErrors.paymentRequired(
+        error instanceof Error ? error.message : 'Plan limit reached'
+      )
+    }
 
     const data = createLinkSchema.parse(input);
     const domain = data.domain ?? DEFAULT_DOMAIN

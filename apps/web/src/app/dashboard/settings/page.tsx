@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/lib/hooks/use-toast'
 import { formatWorkspaceRole } from '@/lib/utils/roles'
+import { WORKSPACE_PLAN_LIMITS } from '@/lib/plans'
 
 type MeResponse = {
   id: string
@@ -169,6 +170,11 @@ export default function SettingsPage() {
       return 'your-api-host.example.com'
     }
   })()
+  const planLimits = workspace
+    ? WORKSPACE_PLAN_LIMITS[(workspace.workspace.plan in WORKSPACE_PLAN_LIMITS
+        ? workspace.workspace.plan
+        : 'FREE') as keyof typeof WORKSPACE_PLAN_LIMITS]
+    : null
 
   useEffect(() => {
     hydrate()
@@ -551,6 +557,22 @@ export default function SettingsPage() {
           <p className="mt-2 text-white/60">
             Control workspace naming and branding.
           </p>
+
+          {workspace && planLimits ? (
+            <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4 text-sm text-white/70">
+              <p className="font-medium text-cyan-200">
+                {workspace.workspace.plan} plan capacity
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <p>Links: {planLimits.links ?? 'Unlimited'}</p>
+                <p>Custom domains: {planLimits.customDomains ?? 'Unlimited'}</p>
+                <p>Members: {planLimits.members ?? 'Unlimited'}</p>
+                <p>API keys: {planLimits.apiKeys ?? 'Unlimited'}</p>
+                <p>Monthly exports: {planLimits.monthlyExports ?? 'Unlimited'}</p>
+                <p>Analytics: {planLimits.analytics}</p>
+              </div>
+            </div>
+          ) : null}
 
           <form onSubmit={handleWorkspaceSave} className="mt-6 space-y-4">
             <TextField

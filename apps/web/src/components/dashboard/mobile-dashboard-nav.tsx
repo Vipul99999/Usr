@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BarChart3,
+  BriefcaseBusiness,
   FileText,
   House,
   KeyRound,
@@ -17,6 +18,7 @@ const items = [
   { href: '/dashboard', label: 'Home', icon: House },
   { href: '/dashboard/links', label: 'Links', icon: Link2 },
   { href: '/dashboard/analytics', label: 'Stats', icon: BarChart3 },
+  { href: '/dashboard/campaigns', label: 'Campaigns', icon: BriefcaseBusiness },
   { href: '/dashboard/members', label: 'Team', icon: Users },
   { href: '/dashboard/security', label: 'Security', icon: Shield },
   { href: '/dashboard/api-keys', label: 'Keys', icon: KeyRound },

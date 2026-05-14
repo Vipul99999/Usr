@@ -15,7 +15,7 @@ export function PaginationControls({ page, totalPages, onPrev, onNext }: Props) 
       <button
         onClick={onPrev}
         disabled={page <= 1}
-        className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/80 disabled:opacity-40"
+        className="rounded-[18px] border border-white/10 px-4 py-2 text-sm text-white/80 transition hover:bg-white/[0.05] disabled:opacity-40"
       >
         Previous
       </button>
@@ -27,7 +27,7 @@ export function PaginationControls({ page, totalPages, onPrev, onNext }: Props) 
       <button
         onClick={onNext}
         disabled={page >= totalPages}
-        className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/80 disabled:opacity-40"
+        className="rounded-[18px] border border-white/10 px-4 py-2 text-sm text-white/80 transition hover:bg-white/[0.05] disabled:opacity-40"
       >
         Next
       </button>

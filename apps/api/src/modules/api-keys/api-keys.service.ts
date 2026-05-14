@@ -5,6 +5,7 @@ import { API_KEY_SCOPE_LIST } from '@repo/shared'
 import { ApiKeysRepository } from './api-keys.repository.js'
 import { AuditService } from '../audit/audit.service.js'
 import { env } from '../../config/env.js'
+import { assertLimit, getWorkspacePlanLimits } from '../../common/utils/workspace-plan-limits.js'
 
 const createApiKeySchema = z.object({
   name: z.string().min(2).max(100),
@@ -56,9 +57,23 @@ export class ApiKeysService {
   }
 
   async create(workspaceId: string, userId: string, input: unknown) {
-    await this.ensureAdmin(workspaceId, userId)
+    const membership = await this.ensureAdmin(workspaceId, userId)
 
     const data = createApiKeySchema.parse(input)
+    const limits = getWorkspacePlanLimits(membership.workspace.plan)
+    const activeApiKeys = await this.repo.countActiveApiKeys(workspaceId)
+    try {
+      assertLimit({
+        current: activeApiKeys,
+        limit: limits.apiKeys,
+        resourceLabel: 'active API keys',
+        upgradeMessage: 'Free workspaces can keep 3 active API keys. Upgrade to Pro for more machine access.'
+      })
+    } catch (error) {
+      throw this.app.httpErrors.paymentRequired(
+        error instanceof Error ? error.message : 'Plan limit reached'
+      )
+    }
 
     const rawKey = generateRawApiKey()
     const keyHash = sha256(rawKey)

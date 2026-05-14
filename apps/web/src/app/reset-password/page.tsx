@@ -79,11 +79,12 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
-        <h1 className="text-3xl font-semibold">Reset password</h1>
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+      <div className="premium-panel w-full max-w-md rounded-[32px] p-8">
+        <p className="text-sm uppercase tracking-[0.24em] text-cyan-200/70">Password reset</p>
+        <h1 className="mt-4 text-3xl font-semibold">Choose a new password</h1>
         <p className="mt-2 text-white/60">
-          Choose a new password for your account.
+          Set a fresh password and get back into your workspace securely.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -121,7 +122,7 @@ export default function ResetPasswordPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
+          <div className="premium-panel w-full max-w-md rounded-[32px] p-8">
             <h1 className="text-3xl font-semibold">Reset password</h1>
             <p className="mt-8 text-white/70">Loading reset form...</p>
           </div>

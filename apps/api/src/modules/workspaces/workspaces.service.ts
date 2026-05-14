@@ -42,6 +42,12 @@ private audit: AuditService
 
   async create(userId: string, input: unknown) {
     const data = createWorkspaceSchema.parse(input)
+    const ownedWorkspaces = await this.repo.countOwnedWorkspaces(userId)
+    if (ownedWorkspaces >= 1) {
+      throw this.app.httpErrors.paymentRequired(
+        'Free accounts can create 1 workspace. Upgrade to Pro later when you are ready to run multiple brands or teams.'
+      )
+    }
 
     let base = slugifyWorkspaceName(data.name)
     if (!base) base = 'workspace'

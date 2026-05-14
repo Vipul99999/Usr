@@ -16,14 +16,14 @@ type Props = {
 export function SelectField({ label, value, onChange, options, error }: Props) {
   return (
     <div>
-      <label className="mb-2 block text-sm text-white/70">{label}</label>
+      <label className="mb-2 block text-xs uppercase tracking-[0.24em] text-white/52">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
+        className={`w-full rounded-[20px] border px-4 py-3.5 outline-none transition focus:ring-4 focus:ring-cyan-300/10 ${
           error
             ? 'border-red-500/30 bg-red-500/5 text-white'
-            : 'border-white/10 bg-slate-900 text-white'
+            : 'border-white/10 bg-slate-950/80 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] focus:border-cyan-200/30'
         }`}
       >
         <option value="">Select option</option>

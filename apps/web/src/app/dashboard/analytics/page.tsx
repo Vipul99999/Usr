@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
@@ -206,6 +207,23 @@ export default function AnalyticsPage() {
           <p className="mt-2 text-sm text-white/55">
             {topDevice ? `${topDevice.clicks} clicks came from this device type.` : 'Your device mix will show up here once click events have been processed.'}
           </p>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Need the campaign story, not just the workspace trend?</h3>
+            <p className="mt-2 text-sm text-white/58">
+              Use campaign reporting for weekly summaries, prettier shareable views, and focused exports for one launch or initiative.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/campaigns"
+            className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.02]"
+          >
+            Open campaign reports
+          </Link>
         </div>
       </div>
 

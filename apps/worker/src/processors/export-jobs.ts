@@ -30,10 +30,16 @@ export async function processExportJob(payload: GenerateLinksExportPayload) {
     }
   })
 
+  const campaignFilter =
+    exportJob.type === 'campaign_csv' && exportJob.filtersJson && typeof exportJob.filtersJson === 'object'
+      ? (exportJob.filtersJson as { campaign?: string }).campaign
+      : null
+
   const links = await prisma.link.findMany({
     where: {
       workspaceId: payload.workspaceId,
-      deletedAt: null
+      deletedAt: null,
+      ...(campaignFilter ? { campaign: campaignFilter } : {})
     },
     orderBy: {
       createdAt: 'desc'
@@ -62,7 +68,11 @@ export async function processExportJob(payload: GenerateLinksExportPayload) {
     .map((row) => row.map(csvEscape).join(','))
     .join('\n')
 
-  const fileName = exportJob.fileName || `links-${payload.workspaceId}-${Date.now()}.csv`
+  const fileName =
+    exportJob.fileName ||
+    (campaignFilter
+      ? `${campaignFilter.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'campaign'}-${Date.now()}.csv`
+      : `links-${payload.workspaceId}-${Date.now()}.csv`)
   const storageKey = objectPublicPath(pathForExport(payload.workspaceId, payload.exportJobId, fileName))
 
   await writeObject(storageKey, csv, {

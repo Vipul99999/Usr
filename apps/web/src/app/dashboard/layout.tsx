@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart3,
+  BriefcaseBusiness,
   FileText,
   KeyRound,
   LayoutDashboard,
@@ -29,6 +30,9 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith('/dashboard/links/') && pathname.endsWith('/edit')) return 'Edit Link'
   if (pathname.startsWith('/dashboard/links/')) return 'Link Details'
   if (pathname === '/dashboard/analytics') return 'Analytics'
+  if (pathname === '/dashboard/campaigns') return 'Campaigns'
+  if (pathname.startsWith('/dashboard/campaigns/') && pathname.endsWith('/report')) return 'Campaign Report'
+  if (pathname.startsWith('/dashboard/campaigns/')) return 'Campaign Details'
   if (pathname === '/dashboard/api-keys') return 'API Keys'
   if (pathname === '/dashboard/audit-logs') return 'Audit Logs'
   if (pathname === '/dashboard/members') return 'Members'
@@ -43,6 +47,7 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/links', label: 'Links', icon: Link2 },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/dashboard/campaigns', label: 'Campaigns', icon: BriefcaseBusiness },
   { href: '/dashboard/members', label: 'Members', icon: Users },
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/dashboard/security', label: 'Security', icon: Shield },

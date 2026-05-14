@@ -18,6 +18,16 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
     }
   }, controller.exportLinksCsv)
 
+  app.post('/workspaces/:workspaceId/exports/campaigns/:campaign', {
+    preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.EXPORTS_WRITE])],
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '10 minutes'
+      }
+    }
+  }, controller.exportCampaignCsv)
+
   app.get('/workspaces/:workspaceId/exports', {
     preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.EXPORTS_READ])]
   }, controller.list)

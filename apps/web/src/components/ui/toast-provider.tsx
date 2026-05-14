@@ -11,16 +11,21 @@ export function ToastProvider() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto rounded-2xl border px-4 py-4 shadow-2xl backdrop-blur ${
+          className={`pointer-events-auto rounded-[22px] border px-4 py-4 shadow-[0_24px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl ${
             toast.type === 'success'
-              ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
+              ? 'border-emerald-500/20 bg-[linear-gradient(180deg,rgba(16,185,129,0.18),rgba(16,185,129,0.08))] text-emerald-50'
               : toast.type === 'error'
-                ? 'border-red-500/20 bg-red-500/10 text-red-200'
-                : 'border-cyan-500/20 bg-cyan-500/10 text-cyan-200'
+                ? 'border-red-500/20 bg-[linear-gradient(180deg,rgba(239,68,68,0.18),rgba(239,68,68,0.08))] text-red-50'
+                : 'border-cyan-500/20 bg-[linear-gradient(180deg,rgba(34,211,238,0.18),rgba(34,211,238,0.08))] text-cyan-50'
           }`}
         >
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm leading-6">{toast.message}</p>
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] opacity-70">
+                {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Attention' : 'Update'}
+              </p>
+              <p className="mt-2 text-sm leading-6">{toast.message}</p>
+            </div>
             <button
               onClick={() => removeToast(toast.id)}
               className="rounded-lg p-1 opacity-80 hover:opacity-100"

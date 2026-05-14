@@ -4,6 +4,7 @@ import { readObject } from '@repo/db'
 import { JOB_KIND } from '@repo/shared'
 import { ExportsRepository } from './exports.repository.js'
 import { AuditService } from '../audit/audit.service.js'
+import { assertLimit, getWorkspacePlanLimits } from '../../common/utils/workspace-plan-limits.js'
 
 export class ExportsService {
   private repo: ExportsRepository
@@ -15,7 +16,26 @@ export class ExportsService {
   }
 
   async exportLinksCsv(workspaceId: string, userId: string) {
-    await this.ensureMembership(workspaceId, userId)
+    const membership = await this.ensureMembership(workspaceId, userId)
+    const limits = getWorkspacePlanLimits(membership.workspace.plan)
+    if (limits.monthlyExports !== null) {
+      const startOfMonth = new Date()
+      startOfMonth.setUTCDate(1)
+      startOfMonth.setUTCHours(0, 0, 0, 0)
+      const monthlyExports = await this.repo.countExportsSince(workspaceId, startOfMonth)
+      try {
+        assertLimit({
+          current: monthlyExports,
+          limit: limits.monthlyExports,
+          resourceLabel: 'monthly exports',
+          upgradeMessage: 'Free workspaces can run 3 exports per month. Upgrade to Pro for unlimited reporting exports.'
+        })
+      } catch (error) {
+        throw this.app.httpErrors.paymentRequired(
+          error instanceof Error ? error.message : 'Plan limit reached'
+        )
+      }
+    }
     const existing = await this.repo.findInFlightLinksExport(workspaceId, userId)
 
     if (existing) {
@@ -53,15 +73,92 @@ export class ExportsService {
     })
 
     await this.audit.log({
-  workspaceId,
-  actorUserId: userId,
-  action: 'export.request_links_csv',
-  entityType: 'export_job',
-  entityId: job.id,
-  metadataJson: {
-    filename: fileName
+      workspaceId,
+      actorUserId: userId,
+      action: 'export.request_links_csv',
+      entityType: 'export_job',
+      entityId: job.id,
+      metadataJson: {
+        filename: fileName
+      }
+    })
+    return {
+      exportId: job.id,
+      filename: fileName,
+      status: job.status,
+      reused: false
+    }
   }
-})
+
+  async exportCampaignCsv(workspaceId: string, campaign: string, userId: string) {
+    const membership = await this.ensureMembership(workspaceId, userId)
+    const limits = getWorkspacePlanLimits(membership.workspace.plan)
+    if (limits.monthlyExports !== null) {
+      const startOfMonth = new Date()
+      startOfMonth.setUTCDate(1)
+      startOfMonth.setUTCHours(0, 0, 0, 0)
+      const monthlyExports = await this.repo.countExportsSince(workspaceId, startOfMonth)
+      try {
+        assertLimit({
+          current: monthlyExports,
+          limit: limits.monthlyExports,
+          resourceLabel: 'monthly exports',
+          upgradeMessage: 'Free workspaces can run 3 exports per month. Upgrade to Pro for unlimited campaign reporting exports.'
+        })
+      } catch (error) {
+        throw this.app.httpErrors.paymentRequired(
+          error instanceof Error ? error.message : 'Plan limit reached'
+        )
+      }
+    }
+
+    const existing = await this.repo.findInFlightCampaignExport(workspaceId, userId, campaign)
+    if (existing) {
+      return {
+        exportId: existing.id,
+        filename: existing.fileName || `campaign-${campaign}.csv`,
+        status: existing.status,
+        reused: true
+      }
+    }
+
+    const fileName = `${campaign.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'campaign'}-${Date.now()}.csv`
+
+    const job = await this.repo.createExportJob({
+      workspaceId,
+      requestedById: userId,
+      type: 'campaign_csv',
+      status: 'PENDING',
+      fileUrl: null,
+      fileName,
+      contentType: 'text/csv',
+      content: null,
+      filtersJson: { campaign },
+      errorMessage: null,
+      completedAt: null
+    })
+
+    await enqueueJob(this.app.prisma, {
+      kind: JOB_KIND.GENERATE_LINKS_EXPORT,
+      payload: {
+        exportJobId: job.id,
+        workspaceId,
+        requestedById: userId
+      } as Prisma.InputJsonValue
+    })
+
+    await this.audit.log({
+      workspaceId,
+      actorUserId: userId,
+      action: 'export.request_campaign_csv',
+      entityType: 'export_job',
+      entityId: job.id,
+      metadataJson: {
+        filename: fileName,
+        campaign
+      }
+    })
+
     return {
       exportId: job.id,
       filename: fileName,
@@ -134,5 +231,7 @@ export class ExportsService {
     if (!membership) {
       throw this.app.httpErrors.forbidden('Access denied')
     }
+
+    return membership
   }
 }

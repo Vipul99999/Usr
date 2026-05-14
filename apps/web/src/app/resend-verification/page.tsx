@@ -55,7 +55,7 @@ export default function ResendVerificationPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 text-white">
       <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(160deg,rgba(245,158,11,0.13),rgba(8,19,36,0.9)_34%,rgba(8,19,36,0.98))] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] lg:p-10">
+        <div className="premium-panel-strong rounded-[36px] bg-[linear-gradient(160deg,rgba(245,158,11,0.13),rgba(8,19,36,0.9)_34%,rgba(8,19,36,0.98))] p-8 lg:p-10">
           <p className="text-sm uppercase tracking-[0.35em] text-amber-100/70">Verification</p>
           <h1 className="mt-5 text-4xl font-semibold leading-tight">
             Keep onboarding moving when the first email gets missed.
@@ -76,7 +76,7 @@ export default function ResendVerificationPage() {
           </div>
         </div>
 
-        <div className="rounded-[36px] border border-white/10 bg-[rgba(8,19,36,0.86)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur lg:p-10">
+        <div className="premium-panel rounded-[36px] p-8 lg:p-10">
           <p className="text-sm uppercase tracking-[0.3em] text-white/45">Resend verification</p>
           <h2 className="mt-4 text-3xl font-semibold">Get a fresh email link</h2>
           <p className="mt-3 text-white/60">

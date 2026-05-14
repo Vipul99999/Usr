@@ -13,6 +13,7 @@ import {
   toPublicWorkspaceRole,
   toStoredWorkspaceRole
 } from '../../common/utils/workspace-roles.js'
+import { assertLimit, getWorkspacePlanLimits } from '../../common/utils/workspace-plan-limits.js'
 
 function hoursFromNow(hours: number) {
   return new Date(Date.now() + hours * 60 * 60 * 1000)
@@ -62,6 +63,23 @@ export class InvitationsService {
     const data = {
       ...parsed,
       email: normalizeEmail(parsed.email)
+    }
+    const limits = getWorkspacePlanLimits(adminMembership.workspace.plan)
+    const [memberCount, pendingInvitations] = await Promise.all([
+      this.repo.countWorkspaceMembers(workspaceId),
+      this.repo.countPendingInvitations(workspaceId)
+    ])
+    try {
+      assertLimit({
+        current: memberCount + pendingInvitations,
+        limit: limits.members,
+        resourceLabel: 'workspace seats',
+        upgradeMessage: 'Free workspaces are built for solo use. Upgrade to Pro to invite teammates and collaborate.'
+      })
+    } catch (error) {
+      throw this.app.httpErrors.paymentRequired(
+        error instanceof Error ? error.message : 'Plan limit reached'
+      )
     }
 
     const existingUser = await this.repo.findUserByEmail(data.email)

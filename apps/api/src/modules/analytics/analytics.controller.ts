@@ -16,6 +16,24 @@ export class AnalyticsController {
     return reply.send(result)
   }
 
+  campaigns = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { workspaceId } = request.params as { workspaceId: string }
+    const result = await this.service.listCampaigns(workspaceId, request.authUser.userId)
+    return reply.send(result)
+  }
+
+  campaignOverview = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { workspaceId, campaign } = request.params as { workspaceId: string; campaign: string }
+    const result = await this.service.getCampaignOverview(workspaceId, decodeURIComponent(campaign), request.authUser.userId)
+    return reply.send(result)
+  }
+
+  campaignWeeklySummary = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { workspaceId, campaign } = request.params as { workspaceId: string; campaign: string }
+    const result = await this.service.getCampaignWeeklySummary(workspaceId, decodeURIComponent(campaign), request.authUser.userId)
+    return reply.send(result)
+  }
+
   linkSummary = async (request: FastifyRequest, reply: FastifyReply) => {
     const { workspaceId, linkId } = request.params as { workspaceId: string; linkId: string }
     const result = await this.service.getLinkSummary(workspaceId, linkId, request.authUser.userId)

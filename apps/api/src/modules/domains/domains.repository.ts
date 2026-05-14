@@ -29,6 +29,12 @@ export class DomainsRepository {
     })
   }
 
+  countWorkspaceDomains(workspaceId: string) {
+    return this.app.prisma.workspaceDomain.count({
+      where: { workspaceId }
+    })
+  }
+
   findDomainByHostname(hostname: string) {
     return this.app.prisma.workspaceDomain.findUnique({
       where: { hostname }

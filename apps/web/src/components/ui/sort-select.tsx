@@ -11,7 +11,7 @@ export function SortSelect({ value, onChange, options }: Props) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none"
+      className="rounded-[18px] border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-200/30 focus:ring-4 focus:ring-cyan-300/10"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

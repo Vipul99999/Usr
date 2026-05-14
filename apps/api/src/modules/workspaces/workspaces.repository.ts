@@ -76,4 +76,13 @@ export class WorkspacesRepository {
       data
     })
   }
+
+  countOwnedWorkspaces(userId: string) {
+    return this.app.prisma.workspaceMember.count({
+      where: {
+        userId,
+        role: 'OWNER'
+      }
+    })
+  }
 }

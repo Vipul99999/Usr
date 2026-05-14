@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { Card } from '@/components/ui/card'
 import { SkeletonCard } from '@/components/ui/skeleton-card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/lib/hooks/use-toast'
 
 type OpsOverview = {
   storage: {
@@ -22,6 +24,36 @@ type OpsOverview = {
       maxEntries: number
       maxBytes: number
     }
+  }
+  queueHealth: {
+    pendingJobs: number
+    processingJobs: number
+    completedJobs: number
+    deadLetterJobs: number
+    retryingJobs: number
+    oldestPendingSeconds: number
+    activeWorkers: string[]
+    recentFailedJobs: Array<{
+      id: string
+      kind: string
+      attempts: number
+      maxAttempts: number
+      errorMessage: string | null
+      updatedAt: string
+      lockedBy: string | null
+    }>
+    recentlyRecoveredJobs: Array<{
+      id: string
+      kind: string
+      attempts: number
+      updatedAt: string
+    }>
+  }
+  requestHealth: {
+    sampleSize: number
+    averageLatencyMs: number | null
+    p95LatencyMs: number | null
+    errorRateLast24h: number
   }
   exportHealth: {
     pendingExports: number
@@ -67,6 +99,9 @@ type OpsOverview = {
 
 export default function SecurityPage() {
   const { accessToken, workspaceId, hydrate } = useAuthStore()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const [retryingJobId, setRetryingJobId] = useState<string | null>(null)
 
   useEffect(() => {
     hydrate()
@@ -80,6 +115,25 @@ export default function SecurityPage() {
       }),
     enabled: !!accessToken && !!workspaceId
   })
+
+  const handleRetryJob = async (jobId: string) => {
+    if (!accessToken || !workspaceId) return
+
+    try {
+      setRetryingJobId(jobId)
+      await apiFetch(`/workspaces/${workspaceId}/ops/jobs/${jobId}/retry`, {
+        method: 'POST',
+        token: accessToken
+      })
+      toast.success('Job moved back to the queue.')
+      await queryClient.invalidateQueries({ queryKey: ['workspace-security-ops', workspaceId] })
+      await queryClient.invalidateQueries({ queryKey: ['workspace-ops', workspaceId] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to retry job')
+    } finally {
+      setRetryingJobId(null)
+    }
+  }
 
   if (opsQuery.isLoading) {
     return (
@@ -104,6 +158,7 @@ export default function SecurityPage() {
     driftedDomains.length === 0 &&
     (ops?.recentAbuseSignals.length || 0) === 0 &&
     (ops?.exportHealth.failedExports || 0) === 0 &&
+    (ops?.queueHealth.deadLetterJobs || 0) === 0 &&
     (!!ops?.cache.redisConfigured ? ops?.cache.mode === 'l1+l2' : true)
 
   return (
@@ -179,6 +234,112 @@ export default function SecurityPage() {
           <p className="mt-2 text-sm text-white/55">
             {ops?.cache.redisConfigured ? 'Shared cache available across instances' : 'Only local cache is active'}
           </p>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <h2 className="text-xl font-semibold">Worker queue health</h2>
+          <p className="mt-1 text-white/60">Retries, dead letters, and queue age are the quiet signals that tell you if async work is staying healthy.</p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Retrying jobs</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.queueHealth.retryingJobs ?? 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Dead letters</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.queueHealth.deadLetterJobs ?? 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Oldest pending</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {ops?.queueHealth.oldestPendingSeconds ? `${Math.floor(ops.queueHealth.oldestPendingSeconds / 60)}m` : '0m'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {(ops?.queueHealth.recentFailedJobs || []).length === 0 ? (
+              <EmptyState
+                title="No dead-letter jobs"
+                description="Jobs that exhaust retries will show up here so they can be reviewed before users feel the failure."
+              />
+            ) : (
+              (ops?.queueHealth.recentFailedJobs || []).map((job) => (
+                <div key={job.id} className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-medium text-white">{job.kind.replace(/_/g, ' ')}</p>
+                      <p className="mt-2 text-sm text-white/60">{job.errorMessage || 'No error message captured'}</p>
+                      <p className="mt-2 text-xs text-white/45">{new Date(job.updatedAt).toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-200">
+                        {job.attempts}/{job.maxAttempts}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleRetryJob(job.id)}
+                        disabled={retryingJobId === job.id}
+                      >
+                        {retryingJobId === job.id ? 'Retrying...' : 'Retry job'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold">Recent request health</h2>
+          <p className="mt-1 text-white/60">A compact startup metric view for integration latency and error pressure.</p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Avg latency</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {typeof ops?.requestHealth.averageLatencyMs === 'number' ? `${ops.requestHealth.averageLatencyMs} ms` : 'n/a'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">P95 latency</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {typeof ops?.requestHealth.p95LatencyMs === 'number' ? `${ops.requestHealth.p95LatencyMs} ms` : 'n/a'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Error rate</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.requestHealth.errorRateLast24h ?? 0}%</p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-white/62">
+            Sample size: {ops?.requestHealth.sampleSize ?? 0} recent machine-auth requests over the last 24 hours. Active workers: {(ops?.queueHealth.activeWorkers || []).length}.
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {(ops?.queueHealth.recentlyRecoveredJobs || []).length === 0 ? (
+              <EmptyState
+                title="No recovered jobs yet"
+                description="Jobs that succeeded after one or more retries will show up here as the system handles noisy real-world conditions."
+              />
+            ) : (
+              (ops?.queueHealth.recentlyRecoveredJobs || []).map((job) => (
+                <div key={job.id} className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-white">{job.kind.replace(/_/g, ' ')}</p>
+                    <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200">
+                      recovered after {job.attempts} attempts
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-white/45">{new Date(job.updatedAt).toLocaleString()}</p>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       </div>
 

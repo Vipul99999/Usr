@@ -10,10 +10,10 @@ export function FormMessage({ error, success }: Props) {
 
   return (
     <div
-      className={`rounded-2xl px-4 py-3 text-sm ${
+      className={`rounded-[22px] border px-4 py-3.5 text-sm shadow-[0_12px_28px_rgba(0,0,0,0.16)] ${
         error
-          ? 'border border-red-500/20 bg-red-500/10 text-red-300'
-          : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+          ? 'border-red-500/20 bg-red-500/10 text-red-200'
+          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-100'
       }`}
     >
       {error || success}

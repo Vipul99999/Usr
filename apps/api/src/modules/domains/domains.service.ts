@@ -13,6 +13,7 @@ import {
 } from '../../common/utils/custom-domains.js'
 import { createDomainSchema, updateDomainStatusSchema } from './domains.schemas.js'
 import { DomainsRepository } from './domains.repository.js'
+import { assertLimit, getWorkspacePlanLimits } from '../../common/utils/workspace-plan-limits.js'
 
 function toPublicDomain(domain: {
   id: string
@@ -76,8 +77,22 @@ export class DomainsService {
   }
 
   async create(workspaceId: string, userId: string, input: unknown) {
-    await this.ensureAdmin(workspaceId, userId)
+    const membership = await this.ensureAdmin(workspaceId, userId)
     const data = createDomainSchema.parse(input)
+    const limits = getWorkspacePlanLimits(membership.workspace.plan)
+    const existingDomains = await this.repo.countWorkspaceDomains(workspaceId)
+    try {
+      assertLimit({
+        current: existingDomains,
+        limit: limits.customDomains,
+        resourceLabel: 'custom domains',
+        upgradeMessage: 'Free workspaces can connect 1 custom domain. Upgrade to Pro for more branded hosts.'
+      })
+    } catch (error) {
+      throw this.app.httpErrors.paymentRequired(
+        error instanceof Error ? error.message : 'Plan limit reached'
+      )
+    }
 
     let hostname: string
     try {

@@ -10,6 +10,12 @@ export class ExportsController {
     return reply.send(result)
   }
 
+  exportCampaignCsv = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { workspaceId, campaign } = request.params as { workspaceId: string; campaign: string }
+    const result = await this.service.exportCampaignCsv(workspaceId, decodeURIComponent(campaign), request.authUser.userId)
+    return reply.send(result)
+  }
+
   list = async (request: FastifyRequest, reply: FastifyReply) => {
     const { workspaceId } = request.params as { workspaceId: string }
     const result = await this.service.list(workspaceId, request.authUser.userId)

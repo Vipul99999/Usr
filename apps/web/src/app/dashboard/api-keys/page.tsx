@@ -222,7 +222,7 @@ export default function ApiKeysPage() {
     <div className="grid gap-6">
       <FormMessage error={error} success={success} />
 
-      <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(103,232,249,0.1),rgba(8,19,36,0.92)_38%,rgba(8,19,36,0.98))] p-6">
+      <div className="premium-panel-strong rounded-[32px] bg-[linear-gradient(135deg,rgba(103,232,249,0.1),rgba(8,19,36,0.92)_38%,rgba(8,19,36,0.98))] p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Machine access</p>
@@ -239,7 +239,7 @@ export default function ApiKeysPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <div className="flex items-center gap-3">
             <ShieldCheck className="text-cyan-300" size={18} />
             <p className="font-medium text-white">Safer by default</p>
@@ -248,7 +248,7 @@ export default function ApiKeysPage() {
             New API keys expire automatically after a safer default window unless you choose a shorter one through the API.
           </p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <div className="flex items-center gap-3">
             <Activity className="text-cyan-300" size={18} />
             <p className="font-medium text-white">Observe real usage</p>
@@ -257,7 +257,7 @@ export default function ApiKeysPage() {
             Each key tracks recent request counts and top routes so suspicious patterns are easier to spot.
           </p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <div className="flex items-center gap-3">
             <KeyRound className="text-cyan-300" size={18} />
             <p className="font-medium text-white">Scope the minimum</p>
@@ -295,13 +295,18 @@ export default function ApiKeysPage() {
                 {apiKeyScopeValues.map((scope) => (
                   <label
                     key={scope}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 text-sm text-white/80"
+                    className={`flex items-center justify-between rounded-[20px] border px-4 py-3 text-sm transition ${
+                      selectedScopes.includes(scope)
+                        ? 'border-cyan-300/25 bg-cyan-400/10 text-cyan-50'
+                        : 'border-white/10 bg-slate-900/70 text-white/80'
+                    }`}
                   >
                     <span>{scopeLabels[scope]}</span>
                     <input
                       type="checkbox"
                       checked={selectedScopes.includes(scope)}
                       onChange={() => toggleScope(scope)}
+                      className="h-4 w-4 accent-cyan-300"
                     />
                   </label>
                 ))}
@@ -363,7 +368,7 @@ export default function ApiKeysPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 md:flex-row md:items-center md:justify-between"
+                  className="premium-panel flex flex-col gap-4 rounded-2xl p-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
                     <p className="font-medium text-white">{item.name}</p>

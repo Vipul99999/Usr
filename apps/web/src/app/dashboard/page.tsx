@@ -10,6 +10,7 @@ import { SkeletonCard } from '@/components/ui/skeleton-card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatWorkspaceRole } from '@/lib/utils/roles'
 import { buildShortUrl } from '@/lib/urls'
+import { WORKSPACE_PLAN_LIMITS } from '@/lib/plans'
 
 type MeResponse = {
   id: string
@@ -51,6 +52,36 @@ type OpsOverview = {
       maxEntries: number
       maxBytes: number
     }
+  }
+  queueHealth: {
+    pendingJobs: number
+    processingJobs: number
+    completedJobs: number
+    deadLetterJobs: number
+    retryingJobs: number
+    oldestPendingSeconds: number
+    activeWorkers: string[]
+    recentFailedJobs: Array<{
+      id: string
+      kind: string
+      attempts: number
+      maxAttempts: number
+      errorMessage: string | null
+      updatedAt: string
+      lockedBy: string | null
+    }>
+    recentlyRecoveredJobs: Array<{
+      id: string
+      kind: string
+      attempts: number
+      updatedAt: string
+    }>
+  }
+  requestHealth: {
+    sampleSize: number
+    averageLatencyMs: number | null
+    p95LatencyMs: number | null
+    errorRateLast24h: number
   }
   exportHealth: {
     pendingExports: number
@@ -106,6 +137,15 @@ type LinkItem = {
   createdAt: string
 }
 
+type CampaignSummary = {
+  campaign: string
+  totalLinks: number
+  totalClicks: number
+  uniqueClicks: number
+  lastClickedAt: string | null
+  createdAt: string | null
+}
+
 export default function DashboardPage() {
   const { accessToken, workspaceId, hydrate } = useAuthStore()
 
@@ -158,19 +198,30 @@ export default function DashboardPage() {
     enabled: !!accessToken && !!workspaceId
   })
 
+  const campaignsQuery = useQuery({
+    queryKey: ['campaigns-preview', workspaceId],
+    queryFn: () =>
+      apiFetch<CampaignSummary[]>(`/workspaces/${workspaceId}/campaigns`, {
+        token: accessToken || undefined
+      }),
+    enabled: !!accessToken && !!workspaceId
+  })
+
   const loading =
     meQuery.isLoading ||
     workspaceQuery.isLoading ||
     analyticsQuery.isLoading ||
     linksQuery.isLoading ||
-    opsQuery.isLoading
+    opsQuery.isLoading ||
+    campaignsQuery.isLoading
 
   const error =
     meQuery.error ||
     workspaceQuery.error ||
     analyticsQuery.error ||
     linksQuery.error ||
-    opsQuery.error
+    opsQuery.error ||
+    campaignsQuery.error
 
   if (loading) {
     return (
@@ -208,6 +259,8 @@ export default function DashboardPage() {
     ops?.cache.redisConfigured === false ? 'Redis not configured' : null,
     ops?.cache.redisConfigured && ops.cache.mode !== 'l1+l2' ? 'Shared cache degraded' : null,
     (ops?.exportHealth.failedExports || 0) > 0 ? 'Failed exports need review' : null,
+    (ops?.queueHealth.deadLetterJobs || 0) > 0 ? 'Worker dead-letter jobs need attention' : null,
+    (ops?.queueHealth.retryingJobs || 0) > 3 ? 'Job retries are building up' : null,
     driftedDomains.length > 0 ? 'Branded domains need DNS attention' : null,
     (ops?.recentAbuseSignals.length || 0) > 0 ? 'Recent abuse signals detected' : null,
     failedEmailEvents.length > 0 ? 'Recent email delivery issues detected' : null
@@ -229,11 +282,79 @@ export default function DashboardPage() {
       hint: 'Branded links improve trust and make the product feel real to customers.'
     },
     {
+      label: 'Name one campaign',
+      done: (campaignsQuery.data || []).length > 0,
+      hint: 'Campaign labels unlock weekly summaries, report pages, and cleaner exports.'
+    },
+    {
       label: 'Set up machine access',
       done: (ops?.activeApiKeys || 0) > 0,
       hint: 'Create a scoped API key when your workflow needs automation or integrations.'
+    },
+    {
+      label: 'Verify exports and worker flow',
+      done: (ops?.queueHealth.deadLetterJobs || 0) === 0 && (ops?.exportHealth.failedExports || 0) === 0,
+      hint: 'Healthy background jobs keep analytics, exports, and delivery feeling trustworthy.'
     }
   ]
+  const recommendedAction = (() => {
+    if ((linksQuery.data || []).length === 0) {
+      return {
+        title: 'Create your first live link',
+        description: 'This unlocks analytics, copy/share, QR, and the first real feedback loop for the product.',
+        href: '/dashboard/links',
+        action: 'Open link studio'
+      }
+    }
+
+    if (!(ops?.domainHealth || []).some((item) => item.status === 'VERIFIED')) {
+      return {
+        title: 'Connect one branded domain',
+        description: 'A branded short host is the fastest way to make the product feel more trustworthy to end users.',
+        href: '/dashboard/settings',
+        action: 'Open domain settings'
+      }
+    }
+
+    if ((campaignsQuery.data || []).length === 0) {
+      return {
+        title: 'Create your first named campaign',
+        description: 'Campaign naming unlocks reporting, weekly summaries, exports, and a much cleaner story for your team.',
+        href: '/dashboard/links',
+        action: 'Name a campaign'
+      }
+    }
+
+    if ((ops?.queueHealth.deadLetterJobs || 0) > 0 || (ops?.exportHealth.failedExports || 0) > 0) {
+      return {
+        title: 'Clear background job friction',
+        description: 'Fixing failed exports or dead-letter jobs protects the product from quiet trust regressions.',
+        href: '/dashboard/security',
+        action: 'Review security and ops'
+      }
+    }
+
+    if ((ops?.activeApiKeys || 0) === 0) {
+      return {
+        title: 'Create one scoped API key',
+        description: 'Machine access is useful for internal automations, reports, and launch-week experiments.',
+        href: '/dashboard/api-keys',
+        action: 'Open API keys'
+      }
+    }
+
+    return {
+      title: 'Push one real campaign',
+      description: 'At this stage, the highest-value product improvement comes from watching real traffic, not guessing.',
+      href: '/dashboard/analytics',
+      action: 'Open analytics'
+    }
+  })()
+  const planLimits = workspace
+    ? WORKSPACE_PLAN_LIMITS[(workspace.workspace.plan in WORKSPACE_PLAN_LIMITS
+        ? workspace.workspace.plan
+        : 'FREE') as keyof typeof WORKSPACE_PLAN_LIMITS]
+    : null
 
   return (
     <div className="grid gap-6">
@@ -340,6 +461,64 @@ export default function DashboardPage() {
               <p className="mt-3 text-sm text-white/55">{item.hint}</p>
             </div>
           ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm text-white/50">Next best move</p>
+            <h2 className="mt-2 text-2xl font-semibold">{recommendedAction.title}</h2>
+            <p className="mt-2 max-w-2xl text-white/60">{recommendedAction.description}</p>
+          </div>
+          <Link
+            href={recommendedAction.href}
+            className="inline-flex items-center justify-center rounded-[18px] border border-cyan-200/40 bg-[linear-gradient(135deg,#b6fbff,#4ce8f7_48%,#59d7c5)] px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_16px_34px_rgba(52,214,232,0.22)]"
+          >
+            {recommendedAction.action}
+          </Link>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm text-white/50">First-user activation</p>
+            <h2 className="mt-2 text-2xl font-semibold">What to do in your first 15 minutes</h2>
+            <p className="mt-2 max-w-3xl text-white/60">
+              The product becomes much more valuable once you publish one branded link, group it under a campaign, and open one report.
+            </p>
+          </div>
+          <Link
+            href={(campaignsQuery.data || []).length > 0 ? '/dashboard/campaigns' : '/dashboard/links'}
+            className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-white/85 transition hover:bg-white/5"
+          >
+            {(campaignsQuery.data || []).length > 0 ? 'Open campaign hub' : 'Start in link studio'}
+          </Link>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/45">Step 1</p>
+            <h3 className="mt-2 text-lg font-semibold">Publish one branded link</h3>
+            <p className="mt-2 text-sm text-white/58">
+              Use a clean slug and, if possible, a verified domain. This creates the first real trust moment for your audience.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/45">Step 2</p>
+            <h3 className="mt-2 text-lg font-semibold">Group it under a campaign</h3>
+            <p className="mt-2 text-sm text-white/58">
+              Naming campaigns turns links into reportable work instead of isolated URLs.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/45">Step 3</p>
+            <h3 className="mt-2 text-lg font-semibold">Share the weekly story</h3>
+            <p className="mt-2 text-sm text-white/58">
+              Open the campaign report view, copy the report URL, or export a CSV when the team needs a quick update.
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -483,6 +662,18 @@ export default function DashboardPage() {
               <p className="mt-1 font-medium text-cyan-300">{workspace?.workspace.slug}</p>
             </div>
           </div>
+
+          {planLimits ? (
+            <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-white/65">
+              <p className="font-medium text-white">Current capacity</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <p>Links: {planLimits.links ?? 'Unlimited'}</p>
+                <p>Custom domains: {planLimits.customDomains ?? 'Unlimited'}</p>
+                <p>Members: {planLimits.members ?? 'Unlimited'}</p>
+                <p>Exports per month: {planLimits.monthlyExports ?? 'Unlimited'}</p>
+              </div>
+            </div>
+          ) : null}
         </Card>
       </div>
 
@@ -522,6 +713,14 @@ export default function DashboardPage() {
               <p className="text-sm text-white/50">Failed exports</p>
               <p className="mt-2 text-2xl font-semibold">{ops?.exportHealth.failedExports ?? 0}</p>
             </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Retrying jobs</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.queueHealth.retryingJobs ?? 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Dead-letter jobs</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.queueHealth.deadLetterJobs ?? 0}</p>
+            </div>
           </div>
         </Card>
 
@@ -557,6 +756,76 @@ export default function DashboardPage() {
                 </div>
               ))
             )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <h2 className="text-xl font-semibold">Worker reliability</h2>
+          <p className="mt-1 text-white/60">Keep background processing visible so exports and async delivery never quietly drift.</p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Active workers</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.queueHealth.activeWorkers.length ?? 0}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Oldest pending job</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {ops?.queueHealth.oldestPendingSeconds ? `${Math.floor(ops.queueHealth.oldestPendingSeconds / 60)}m` : '0m'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {(ops?.queueHealth.recentFailedJobs || []).length === 0 ? (
+              <EmptyState
+                title="No dead-letter jobs"
+                description="Failed worker jobs will show up here once something exhausts its retries."
+              />
+            ) : (
+              (ops?.queueHealth.recentFailedJobs || []).map((job) => (
+                <div key={job.id} className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-white">{job.kind.replace(/_/g, ' ')}</p>
+                    <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-200">
+                      {job.attempts}/{job.maxAttempts} attempts
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-white/60">{job.errorMessage || 'No error message captured'}</p>
+                  <p className="mt-2 text-xs text-white/45">{new Date(job.updatedAt).toLocaleString()}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold">Request health</h2>
+          <p className="mt-1 text-white/60">Startup-grade performance signals from recent machine traffic and integration activity.</p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Avg latency</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {typeof ops?.requestHealth.averageLatencyMs === 'number' ? `${ops.requestHealth.averageLatencyMs} ms` : 'n/a'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">P95 latency</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {typeof ops?.requestHealth.p95LatencyMs === 'number' ? `${ops.requestHealth.p95LatencyMs} ms` : 'n/a'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Error rate</p>
+              <p className="mt-2 text-2xl font-semibold">{ops?.requestHealth.errorRateLast24h ?? 0}%</p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-white/62">
+            Sample size: {ops?.requestHealth.sampleSize ?? 0} recent machine-auth requests from the last 24 hours.
           </div>
         </Card>
       </div>

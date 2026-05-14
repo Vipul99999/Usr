@@ -9,4 +9,14 @@ export const opsRoutes: FastifyPluginAsync = async (app) => {
   app.get('/workspaces/:workspaceId/ops/overview', {
     preHandler: [app.authenticateUser]
   }, controller.workspaceOverview)
+
+  app.post('/workspaces/:workspaceId/ops/jobs/:jobId/retry', {
+    preHandler: [app.authenticateUser],
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '10 minutes'
+      }
+    }
+  }, controller.retryFailedJob)
 }

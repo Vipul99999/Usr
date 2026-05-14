@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SelectField } from '@/components/ui/select-field'
 import { SkeletonCard } from '@/components/ui/skeleton-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/lib/hooks/use-toast'
 import { AnalyticsOverviewChart } from '@/features/analytics/analytics-overview-chart'
 import { buildShortUrl } from '@/lib/urls'
@@ -184,12 +185,29 @@ export default function LinkDetailsPage() {
 
   return (
     <div className="grid gap-6">
+      <div className="premium-panel-strong rounded-[32px] bg-[linear-gradient(135deg,rgba(140,244,255,0.1),rgba(8,19,36,0.92)_40%,rgba(8,19,36,0.98))] p-6">
+        <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Link intelligence</p>
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">{link.title || link.slug}</h1>
+            <p className="mt-2 max-w-2xl text-white/64">
+              Review performance, tagging, and destination quality for this short URL from one focused view.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-white/65">
+            <span className="rounded-full bg-white/5 px-4 py-2">Clicks: {link.totalClicks}</span>
+            <span className="rounded-full bg-white/5 px-4 py-2">Unique: {link.uniqueClicks}</span>
+            <span className="rounded-full bg-white/5 px-4 py-2">Status: {link.status}</span>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-white/50">Link details</p>
-              <h1 className="mt-2 text-3xl font-semibold">{link.title || link.slug}</h1>
+              <h2 className="mt-2 text-3xl font-semibold">{link.title || link.slug}</h2>
             </div>
 
             <Link
@@ -227,7 +245,7 @@ export default function LinkDetailsPage() {
                 Domain: {link.domain}
               </span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-white/70">
-                Campaign: {link.campaign || '—'}
+                Campaign: {link.campaign || 'Not set'}
               </span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-white/70">
                 Clicks: {link.totalClicks}
@@ -249,7 +267,10 @@ export default function LinkDetailsPage() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             {link.tags.length === 0 ? (
-              <p className="text-sm text-white/55">No tags attached yet.</p>
+              <EmptyState
+                title="No tags attached yet"
+                description="Attach tags to keep this link grouped with campaigns, launches, or reporting categories."
+              />
             ) : (
               link.tags.map((tag) => (
                 <div
@@ -284,7 +305,9 @@ export default function LinkDetailsPage() {
         </Card>
       </div>
 
-      <AnalyticsOverviewChart data={dailyQuery.data || []} />
+      <div className="premium-panel rounded-[30px] p-2">
+        <AnalyticsOverviewChart data={dailyQuery.data || []} />
+      </div>
     </div>
   )
 }

@@ -49,20 +49,22 @@ export function WorkspaceSwitcher() {
 
   return (
     <div>
-      <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-white/40">
+      <label className="mb-2 block text-xs uppercase tracking-[0.24em] text-white/40">
         Workspace
       </label>
-      <select
-        value={workspaceId || ''}
-        onChange={(e) => handleChange(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none"
-      >
-        {query.data.map((item) => (
-          <option key={item.workspace.id} value={item.workspace.id}>
-            {item.workspace.name}
-          </option>
-        ))}
-      </select>
+      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-3">
+        <select
+          value={workspaceId || ''}
+          onChange={(e) => handleChange(e.target.value)}
+          className="w-full rounded-[18px] border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-200/30 focus:ring-4 focus:ring-cyan-300/10"
+        >
+          {query.data.map((item) => (
+            <option key={item.workspace.id} value={item.workspace.id}>
+              {item.workspace.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   )
 }

@@ -598,7 +598,17 @@ export default function LinksPage() {
                         Unique: {link.uniqueClicks ?? 0}
                       </span>
                       <span className="rounded-full bg-white/5 px-3 py-1">
-                        Campaign: {link.campaign || 'Not set'}
+                        Campaign:{' '}
+                        {link.campaign ? (
+                          <Link
+                            href={`/dashboard/campaigns/${encodeURIComponent(link.campaign)}`}
+                            className="text-cyan-300 hover:text-cyan-200"
+                          >
+                            {link.campaign}
+                          </Link>
+                        ) : (
+                          'Not set'
+                        )}
                       </span>
                     </div>
 

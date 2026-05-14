@@ -5,11 +5,21 @@ import { redirectCache } from '../../common/utils/link-cache.js'
 
 export const healthRoutes: FastifyPluginAsync = async (app) => {
   app.get('/health', async () => {
+    let storage: ReturnType<typeof describeObjectStorage> | { provider: 'error'; message: string }
+    try {
+      storage = describeObjectStorage()
+    } catch (error) {
+      storage = {
+        provider: 'error',
+        message: error instanceof Error ? error.message : 'Object storage is not configured correctly'
+      }
+    }
+
     return {
       ok: true,
       environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
-      objectStorage: describeObjectStorage(),
+      objectStorage: storage,
       cache: redirectCache.getStats()
     }
   })
@@ -19,6 +29,17 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
 
     const cache = redirectCache.getStats()
     const degradedReasons: string[] = []
+    let storage: ReturnType<typeof describeObjectStorage> | { provider: 'error'; message: string }
+
+    try {
+      storage = describeObjectStorage()
+    } catch (error) {
+      storage = {
+        provider: 'error',
+        message: error instanceof Error ? error.message : 'Object storage is not configured correctly'
+      }
+      degradedReasons.push('Object storage is not configured correctly')
+    }
 
     if (env.NODE_ENV === 'production' && !cache.redisConfigured) {
       degradedReasons.push('Redis is not configured in production')
@@ -33,7 +54,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
       status: degradedReasons.length === 0 ? 'ready' : 'degraded',
       environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
-      objectStorage: describeObjectStorage(),
+      objectStorage: storage,
       cache,
       degradedReasons
     }

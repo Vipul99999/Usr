@@ -3,9 +3,10 @@ import type { Metadata, Viewport } from 'next'
 import { Providers } from './providers'
 
 const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_SHORT_URL_BASE || 'http://localhost:3000'
+const normalizedAppUrl = appUrl.replace(/\/+$/, '')
 
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
+  metadataBase: new URL(normalizedAppUrl),
   title: {
     default: 'UrlShortener | Short links, campaign analytics, and teamwork',
     template: '%s | UrlShortener'
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
   category: 'technology',
   creator: 'UrlShortener',
   publisher: 'UrlShortener',
+  authors: [{ name: 'UrlShortener' }],
   formatDetection: {
     email: false,
     address: false,
@@ -38,19 +40,35 @@ export const metadata: Metadata = {
     title: 'UrlShortener',
     description:
       'Create branded short links, monitor campaign performance, and collaborate with your team in one focused workspace.',
-    url: appUrl,
+    url: normalizedAppUrl,
     siteName: 'UrlShortener',
-    type: 'website'
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'UrlShortener dashboard preview'
+      }
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'UrlShortener',
     description:
-      'Create branded short links, track clicks, and manage campaigns with a fast startup-friendly link platform.'
+      'Create branded short links, track clicks, and manage campaigns with a fast startup-friendly link platform.',
+    images: ['/twitter-image']
   },
   robots: {
     index: true,
-    follow: true
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1
+    }
   }
 }
 

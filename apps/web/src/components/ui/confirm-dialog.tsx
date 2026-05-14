@@ -32,13 +32,14 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-4 pb-4 pt-10 sm:items-center sm:px-6">
-      <div className="w-full max-w-lg rounded-[28px] border border-white/10 bg-slate-950 p-5 shadow-2xl sm:p-6">
+      <div className="premium-panel-strong w-full max-w-lg rounded-[30px] p-5 sm:p-6">
         <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-white/42">Please confirm</p>
           <h3 className="text-xl font-semibold text-white">{title}</h3>
           <p className="mt-2 text-sm text-white/60">{description}</p>
         </div>
 
-        {details ? <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-white/70">{details}</div> : null}
+        {details ? <div className="mt-4 rounded-[22px] border border-white/10 bg-slate-900/70 p-4 text-sm text-white/70">{details}</div> : null}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onCancel} disabled={busy}>

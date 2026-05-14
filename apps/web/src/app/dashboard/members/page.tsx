@@ -225,11 +225,11 @@ export default function MembersPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm text-white/70">Role</label>
+                  <label className="mb-2 block text-xs uppercase tracking-[0.24em] text-white/52">Role</label>
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as 'ADMIN' | 'MEMBER')}
-                    className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-emerald-300/50"
+                    className="w-full rounded-[20px] border border-white/10 bg-slate-950/80 px-4 py-3.5 text-white outline-none transition focus:border-emerald-300/40 focus:ring-4 focus:ring-emerald-300/10"
                   >
                     <option value="MEMBER">Member</option>
                     <option value="ADMIN">Admin</option>
@@ -250,7 +250,7 @@ export default function MembersPage() {
 
             <div className="grid gap-4">
               {stats.map((item) => (
-                <div key={item.label} className="rounded-[26px] border border-white/10 bg-slate-900/70 p-5">
+                <div key={item.label} className="premium-panel rounded-[26px] p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">{item.label}</p>
                   <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
                   <p className="mt-2 text-sm text-white/58">{item.description}</p>
@@ -283,7 +283,7 @@ export default function MembersPage() {
               invitations.map((item) => (
                 <div
                   key={item.id}
-                  className="grid gap-4 rounded-[26px] border border-white/10 bg-slate-900/70 p-5 lg:grid-cols-[1fr_auto]"
+                  className="premium-panel grid gap-4 rounded-[26px] p-5 lg:grid-cols-[1fr_auto]"
                 >
                   <div className="grid gap-3">
                     <div>
@@ -335,7 +335,7 @@ export default function MembersPage() {
               members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex flex-col gap-4 rounded-[26px] border border-white/10 bg-slate-900/70 p-5 md:flex-row md:items-center md:justify-between"
+                  className="premium-panel flex flex-col gap-4 rounded-[26px] p-5 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
                     <p className="font-medium text-white">{member.user.name || member.user.email}</p>

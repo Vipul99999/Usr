@@ -16,6 +16,18 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
     preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.ANALYTICS_READ])]
   }, controller.workspaceOverview)
 
+  app.get('/workspaces/:workspaceId/campaigns', {
+    preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.ANALYTICS_READ])]
+  }, controller.campaigns)
+
+  app.get('/workspaces/:workspaceId/campaigns/:campaign/overview', {
+    preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.ANALYTICS_READ])]
+  }, controller.campaignOverview)
+
+  app.get('/workspaces/:workspaceId/campaigns/:campaign/weekly-summary', {
+    preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.ANALYTICS_READ])]
+  }, controller.campaignWeeklySummary)
+
   app.get('/workspaces/:workspaceId/links/:linkId/analytics/summary', {
     preHandler: [app.authenticateAny, requireApiKeyScopes([API_KEY_SCOPES.ANALYTICS_READ])]
   }, controller.linkSummary)

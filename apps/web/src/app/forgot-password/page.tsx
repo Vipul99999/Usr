@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 text-white">
       <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-        <div className="rounded-[36px] border border-white/10 bg-[rgba(8,19,36,0.86)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur lg:p-10">
+        <div className="premium-panel rounded-[36px] p-8 lg:p-10">
           <p className="text-sm uppercase tracking-[0.3em] text-white/45">Password recovery</p>
           <h1 className="mt-4 text-3xl font-semibold">Reset access without losing momentum</h1>
           <p className="mt-3 text-white/60">
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(160deg,rgba(103,232,249,0.12),rgba(8,19,36,0.9)_35%,rgba(8,19,36,0.98))] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] lg:p-10">
+        <div className="premium-panel-strong rounded-[36px] bg-[linear-gradient(160deg,rgba(103,232,249,0.12),rgba(8,19,36,0.9)_35%,rgba(8,19,36,0.98))] p-8 lg:p-10">
           <p className="text-sm uppercase tracking-[0.35em] text-cyan-200/70">Keep it secure</p>
           <h2 className="mt-5 text-4xl font-semibold leading-tight">
             Recovery that protects users without adding confusion.
