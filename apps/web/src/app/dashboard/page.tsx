@@ -42,6 +42,16 @@ type OpsOverview = {
   storage: {
     provider: string
   }
+  cache: {
+    mode: string
+    redisConfigured: boolean
+    l1: {
+      entryCount: number
+      totalBytes: number
+      maxEntries: number
+      maxBytes: number
+    }
+  }
   exportHealth: {
     pendingExports: number
     failedExports: number
@@ -56,6 +66,31 @@ type OpsOverview = {
     kind: string
     actionTaken: string | null
     createdAt: string
+  }>
+  recentEmailEvents: Array<{
+    id: string
+    provider: string
+    eventType: string
+    status: string | null
+    createdAt: string
+  }>
+  recentApiKeyEvents: Array<{
+    id: string
+    statusCode: number
+    createdAt: string
+    apiKey: {
+      name: string
+      keyPrefix: string
+    }
+  }>
+  domainDrift: Array<{
+    id: string
+    hostname: string
+    status: string
+    pointsCorrectly: boolean
+    usesRecommendedCname: boolean
+    issueCount: number
+    issues: string[]
   }>
 }
 
@@ -165,6 +200,22 @@ export default function DashboardPage() {
   const topLinks = [...(linksQuery.data || [])]
     .sort((a, b) => b.totalClicks - a.totalClicks)
     .slice(0, 5)
+  const driftedDomains = (ops?.domainDrift || []).filter((item) => item.issueCount > 0)
+  const failedEmailEvents = (ops?.recentEmailEvents || []).filter(
+    (item) => item.status && !['sent', 'delivered', 'received'].includes(item.status.toLowerCase())
+  )
+  const degradedSignals = [
+    ops?.cache.redisConfigured === false ? 'Redis not configured' : null,
+    ops?.cache.redisConfigured && ops.cache.mode !== 'l1+l2' ? 'Shared cache degraded' : null,
+    (ops?.exportHealth.failedExports || 0) > 0 ? 'Failed exports need review' : null,
+    driftedDomains.length > 0 ? 'Branded domains need DNS attention' : null,
+    (ops?.recentAbuseSignals.length || 0) > 0 ? 'Recent abuse signals detected' : null,
+    failedEmailEvents.length > 0 ? 'Recent email delivery issues detected' : null
+  ].filter(Boolean) as string[]
+  const confidenceTone =
+    degradedSignals.length === 0
+      ? 'bg-emerald-500/10 text-emerald-200 border-emerald-400/20'
+      : 'bg-amber-500/10 text-amber-100 border-amber-400/20'
 
   const readinessItems = [
     {
@@ -195,6 +246,67 @@ export default function DashboardPage() {
           Hello {user?.name || user?.email}. Here&apos;s the current performance snapshot for your
           workspace.
         </p>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm text-white/50">System confidence</p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              {degradedSignals.length === 0
+                ? 'Core systems look calm for customers right now.'
+                : 'A few trust signals need attention before they become customer-facing.'}
+            </h2>
+            <p className="mt-2 max-w-3xl text-white/60">
+              This is the founder view of operational confidence: cache posture, export stability,
+              branded-domain safety, and recent abuse pressure.
+            </p>
+          </div>
+          <div className={`rounded-2xl border px-4 py-3 text-sm ${confidenceTone}`}>
+            {degradedSignals.length === 0 ? 'All core trust signals look healthy' : `${degradedSignals.length} signals need review`}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <p className="text-sm text-white/50">Redirect cache</p>
+            <p className="mt-2 text-2xl font-semibold uppercase">{ops?.cache.mode || 'l1-only'}</p>
+            <p className="mt-2 text-sm text-white/55">
+              {ops?.cache.redisConfigured ? 'Redis/Upstash connected for shared cache use.' : 'Only local L1 cache is active right now.'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <p className="text-sm text-white/50">Domain drift</p>
+            <p className="mt-2 text-2xl font-semibold">{driftedDomains.length}</p>
+            <p className="mt-2 text-sm text-white/55">Connected domains with live routing or DNS concerns.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <p className="text-sm text-white/50">Failed exports</p>
+            <p className="mt-2 text-2xl font-semibold">{ops?.exportHealth.failedExports ?? 0}</p>
+            <p className="mt-2 text-sm text-white/55">Background export jobs that need attention.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <p className="text-sm text-white/50">Recent machine traffic</p>
+            <p className="mt-2 text-2xl font-semibold">{ops?.recentApiKeyEvents.length ?? 0}</p>
+            <p className="mt-2 text-sm text-white/55">Recent API-key calls reaching this workspace.</p>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          {degradedSignals.length === 0 ? (
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4 text-sm text-emerald-100">
+              Redirect performance, exports, branded-domain safety, and recent abuse signals all look stable from this workspace view.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {degradedSignals.map((signal) => (
+                <div key={signal} className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-4 text-sm text-amber-100">
+                  {signal}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
 
       <Card>
@@ -379,7 +491,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Operations pulse</h2>
-              <p className="mt-1 text-white/60">Storage, exports, and API access at a glance.</p>
+              <p className="mt-1 text-white/60">Storage, cache posture, exports, and API access at a glance.</p>
             </div>
             <Link
               href="/dashboard/settings"
@@ -393,6 +505,10 @@ export default function DashboardPage() {
             <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <p className="text-sm text-white/50">Object storage</p>
               <p className="mt-2 text-2xl font-semibold uppercase">{ops?.storage.provider || 'local'}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-sm text-white/50">Cache mode</p>
+              <p className="mt-2 text-2xl font-semibold uppercase">{ops?.cache.mode || 'l1-only'}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <p className="text-sm text-white/50">Active API keys</p>

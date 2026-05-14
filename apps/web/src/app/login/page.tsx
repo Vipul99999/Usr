@@ -70,10 +70,10 @@ export default function LoginPage() {
     <GuestOnly>
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 text-white">
         <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(160deg,rgba(103,232,249,0.14),rgba(8,19,36,0.9)_42%,rgba(8,19,36,0.98))] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] lg:p-10">
+          <div className="premium-panel-strong rounded-[36px] bg-[linear-gradient(160deg,rgba(103,232,249,0.14),rgba(8,19,36,0.9)_42%,rgba(8,19,36,0.98))] p-8 lg:p-10">
             <p className="text-sm uppercase tracking-[0.35em] text-cyan-200/70">UrlShortener</p>
             <h1 className="mt-5 max-w-xl text-4xl font-semibold leading-tight">
-              Operate your links like a real growth system, not a spreadsheet.
+              Operate your links like a branded growth system, not a spreadsheet.
             </h1>
             <p className="mt-4 max-w-2xl text-base text-white/68">
               Clean redirects, custom domains, QR codes, workspace permissions, and analytics that
@@ -102,7 +102,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="rounded-[36px] border border-white/10 bg-[rgba(8,19,36,0.86)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur lg:p-10">
+          <div className="premium-panel rounded-[36px] p-8 lg:p-10">
             <p className="text-sm uppercase tracking-[0.3em] text-white/45">Welcome back</p>
             <h2 className="mt-4 text-3xl font-semibold">Log in to your workspace</h2>
             <p className="mt-3 text-white/60">Get back to redirects, campaigns, exports, and custom domains.</p>

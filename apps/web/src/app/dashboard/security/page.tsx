@@ -13,6 +13,16 @@ type OpsOverview = {
   storage: {
     provider: string
   }
+  cache: {
+    mode: string
+    redisConfigured: boolean
+    l1: {
+      entryCount: number
+      totalBytes: number
+      maxEntries: number
+      maxBytes: number
+    }
+  }
   exportHealth: {
     pendingExports: number
     failedExports: number
@@ -90,6 +100,11 @@ export default function SecurityPage() {
 
   const ops = opsQuery.data
   const driftedDomains = (ops?.domainDrift || []).filter((item) => item.issueCount > 0)
+  const systemLooksCalm =
+    driftedDomains.length === 0 &&
+    (ops?.recentAbuseSignals.length || 0) === 0 &&
+    (ops?.exportHealth.failedExports || 0) === 0 &&
+    (!!ops?.cache.redisConfigured ? ops?.cache.mode === 'l1+l2' : true)
 
   return (
     <div className="grid gap-6">
@@ -112,7 +127,32 @@ export default function SecurityPage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <Card>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm text-white/50">Founder summary</p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              {systemLooksCalm
+                ? 'This workspace looks calm from a trust and operations point of view.'
+                : 'A few signals are worth checking before they create user-facing friction.'}
+            </h2>
+            <p className="mt-2 max-w-3xl text-white/60">
+              This blends abuse events, branded-domain drift, export stability, and cache posture into one fast read.
+            </p>
+          </div>
+          <div
+            className={`rounded-2xl border px-4 py-3 text-sm ${
+              systemLooksCalm
+                ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                : 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+            }`}
+          >
+            {systemLooksCalm ? 'No immediate trust regressions' : 'Review the signals below'}
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <Card>
           <p className="text-sm text-white/50">Abuse signals</p>
           <p className="mt-3 text-4xl font-semibold">{ops?.recentAbuseSignals.length ?? 0}</p>
@@ -132,6 +172,13 @@ export default function SecurityPage() {
           <p className="text-sm text-white/50">Storage mode</p>
           <p className="mt-3 text-4xl font-semibold uppercase">{ops?.storage.provider || 'local'}</p>
           <p className="mt-2 text-sm text-white/55">Export and asset delivery backend currently in use</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-white/50">Redirect cache</p>
+          <p className="mt-3 text-4xl font-semibold uppercase">{ops?.cache.mode || 'l1-only'}</p>
+          <p className="mt-2 text-sm text-white/55">
+            {ops?.cache.redisConfigured ? 'Shared cache available across instances' : 'Only local cache is active'}
+          </p>
         </Card>
       </div>
 
@@ -187,7 +234,10 @@ export default function SecurityPage() {
 
           <div className="mt-6 space-y-3">
             {(ops?.recentAbuseSignals || []).length === 0 ? (
-              <p className="text-sm text-white/55">No recent abuse signals in this workspace.</p>
+              <EmptyState
+                title="No recent abuse signals"
+                description="This workspace has not triggered recent redirect, auth, or machine-auth abuse warnings."
+              />
             ) : (
               (ops?.recentAbuseSignals || []).map((signal) => (
                 <div key={signal.id} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
@@ -213,7 +263,12 @@ export default function SecurityPage() {
 
           <div className="mt-6 space-y-3">
             {(ops?.recentApiKeyEvents || []).length === 0 ? (
-              <p className="text-sm text-white/55">No recent API key activity yet.</p>
+              <EmptyState
+                title="No recent API key traffic"
+                description="Machine-to-machine activity will appear here once an integration starts sending requests."
+                actionLabel="Open API keys"
+                actionHref="/dashboard/api-keys"
+              />
             ) : (
               (ops?.recentApiKeyEvents || []).map((event) => (
                 <div key={event.id} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">

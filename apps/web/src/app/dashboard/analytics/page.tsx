@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(103,232,249,0.12),rgba(8,19,36,0.92)_40%,rgba(8,19,36,0.98))] p-6">
+      <div className="premium-panel-strong rounded-[32px] bg-[linear-gradient(135deg,rgba(103,232,249,0.12),rgba(8,19,36,0.92)_40%,rgba(8,19,36,0.98))] p-6">
         <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Analytics overview</p>
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -169,15 +169,15 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <div className="premium-panel rounded-[28px] p-6">
           <p className="text-sm text-white/50">Total links</p>
           <p className="mt-3 text-4xl font-semibold">{summary.totalLinks}</p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <div className="premium-panel rounded-[28px] p-6">
           <p className="text-sm text-white/50">Total clicks</p>
           <p className="mt-3 text-4xl font-semibold">{summary.totalClicks}</p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <div className="premium-panel rounded-[28px] p-6">
           <p className="text-sm text-white/50">Unique clicks</p>
           <p className="mt-3 text-4xl font-semibold">{summary.uniqueClicks}</p>
         </div>

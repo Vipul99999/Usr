@@ -18,14 +18,14 @@ export function Button({
   ...props
 }: Props) {
   const base =
-    'inline-flex items-center justify-center rounded-2xl px-5 py-3 font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60'
+    'inline-flex items-center justify-center rounded-[18px] px-5 py-3 font-semibold tracking-[0.01em] transition duration-200 disabled:cursor-not-allowed disabled:opacity-60'
 
   const variants: Record<Variant, string> = {
     primary:
-      'bg-gradient-to-r from-cyan-300 via-cyan-400 to-teal-300 text-slate-950 shadow-[0_12px_30px_rgba(34,211,238,0.22)] hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(34,211,238,0.28)]',
+      'border border-cyan-200/50 bg-[linear-gradient(135deg,#b6fbff,#4ce8f7_48%,#59d7c5)] text-slate-950 shadow-[0_16px_36px_rgba(52,214,232,0.24)] hover:-translate-y-0.5 hover:shadow-[0_24px_40px_rgba(52,214,232,0.3)]',
     secondary:
-      'border border-white/10 bg-white/6 text-white hover:bg-white/10 hover:border-white/15',
-    danger: 'border border-red-500/20 bg-red-500/10 text-red-300 hover:bg-red-500/15'
+      'border border-white/10 bg-white/[0.045] text-white hover:bg-white/[0.09] hover:border-white/15',
+    danger: 'border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/15'
   }
 
   return (

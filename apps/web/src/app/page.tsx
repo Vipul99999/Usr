@@ -164,11 +164,11 @@ export default function Page() {
 
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 shadow-lg ring-1 ring-white/10">
-            <span className="text-lg font-bold">U</span>
+          <div className="premium-panel-strong flex h-11 w-11 items-center justify-center rounded-2xl text-lg font-bold text-cyan-100">
+            U
           </div>
           <div>
-            <p className="text-sm text-white/60">Business link platform</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-white/45">Business link platform</p>
             <h1 className="text-lg font-semibold">UrlShortener</h1>
           </div>
         </div>
@@ -205,17 +205,17 @@ export default function Page() {
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Team workspaces</span>
             </div>
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-200">
-              Built for modern teams and campaigns
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-sm text-cyan-100">
+              Built for modern teams, campaign operators, and premium branded traffic
             </div>
 
             <h2 className="max-w-4xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Short links that look sharp, move fast, and convert better.
+              Turn every short link into a sharper, more trusted brand touchpoint.
             </h2>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Launch branded short URLs, organize campaigns, generate QR codes, and track
-              performance from a dashboard designed to feel premium from the first click.
+              Launch branded short URLs, organize campaign surfaces, generate QR codes, and track
+              performance from a link platform designed to feel editorial, operational, and premium from the first click.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -250,7 +250,7 @@ export default function Page() {
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
+                  className="premium-panel rounded-3xl p-5 backdrop-blur-sm"
                 >
                   <div className="text-2xl font-semibold">{stat.value}</div>
                   <div className="mt-1 text-sm text-white/60">{stat.label}</div>
@@ -259,14 +259,14 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl">
-            <div className="rounded-[28px] border border-white/10 bg-slate-900/90 p-5">
+          <div className="premium-orbit premium-panel rounded-[34px] p-4">
+            <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(13,25,42,0.96),rgba(6,13,24,0.98))] p-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
-                  <p className="text-sm text-white/50">Workspace</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Workspace</p>
                   <h3 className="text-xl font-semibold">Spring Campaign</h3>
                 </div>
-                <div className="rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-300">
+                <div className="rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-200">
                   Live
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default function Page() {
         </section>
 
         <section className="pb-20">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8">
+          <div className="premium-panel rounded-[32px] p-8">
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">Trusted by growing teams</p>
             <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {logos.map((logo) => (

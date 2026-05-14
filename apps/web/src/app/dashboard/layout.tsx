@@ -86,19 +86,24 @@ export default function DashboardLayout({ children }: Props) {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="hidden border-r border-white/10 bg-slate-950/90 lg:block">
+        <aside className="hidden border-r border-white/10 bg-[rgba(4,10,18,0.92)] lg:block">
           <div className="sticky top-0 flex h-full flex-col p-5">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/15 text-cyan-200">
+            <div className="premium-panel-strong mb-8 rounded-[28px] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(182,251,255,0.2),rgba(52,214,232,0.08))] text-cyan-100">
                 <Link2 size={20} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/40">Business shortener</p>
+                  <h1 className="mt-1 text-lg font-semibold">UrlShortener</h1>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-white/45">Business shortener</p>
-                <h1 className="text-lg font-semibold">UrlShortener</h1>
-              </div>
+              <p className="mt-4 text-sm text-white/56">
+                Premium link infrastructure for campaigns, teams, and branded trust.
+              </p>
             </div>
 
-            <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="premium-panel mb-6 rounded-2xl p-4">
               <WorkspaceSwitcher />
             </div>
 
@@ -113,10 +118,10 @@ export default function DashboardLayout({ children }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                    className={`flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm transition ${
                       active
-                        ? 'bg-cyan-400 text-slate-950'
-                        : 'text-white/75 hover:bg-white/5 hover:text-white'
+                        ? 'bg-[linear-gradient(135deg,#b6fbff,#4ce8f7_48%,#59d7c5)] text-slate-950 shadow-[0_12px_28px_rgba(52,214,232,0.22)]'
+                        : 'text-white/72 hover:bg-white/[0.05] hover:text-white'
                     }`}
                   >
                     <Icon size={18} />
@@ -137,11 +142,11 @@ export default function DashboardLayout({ children }: Props) {
         </aside>
 
         <main className="min-w-0 pb-20 lg:pb-0">
-          <header className="border-b border-white/10 bg-slate-950/70 px-6 py-5 backdrop-blur lg:px-8">
+          <header className="border-b border-white/10 bg-[rgba(5,11,20,0.72)] px-6 py-5 backdrop-blur-xl lg:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-sm text-white/45">Dashboard</p>
-                <h2 className="truncate text-2xl font-semibold">{getPageTitle(pathname)}</h2>
+                <p className="text-xs uppercase tracking-[0.24em] text-white/42">Dashboard</p>
+                <h2 className="mt-1 truncate text-[1.9rem] font-semibold tracking-tight">{getPageTitle(pathname)}</h2>
               </div>
 
               <div className="flex items-center gap-3">

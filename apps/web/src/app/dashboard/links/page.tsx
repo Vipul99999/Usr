@@ -338,7 +338,7 @@ export default function LinksPage() {
     <div className="grid gap-6">
       <FormMessage error={formError} success={formSuccess} />
 
-      <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(103,232,249,0.1),rgba(8,19,36,0.92)_38%,rgba(8,19,36,0.98))] p-6">
+      <div className="premium-panel-strong rounded-[32px] bg-[linear-gradient(135deg,rgba(103,232,249,0.1),rgba(8,19,36,0.92)_38%,rgba(8,19,36,0.98))] p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">Link studio</p>
@@ -358,21 +358,21 @@ export default function LinksPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <p className="text-sm text-white/50">Best first move</p>
           <h3 className="mt-2 text-lg font-semibold">Start with one campaign link</h3>
           <p className="mt-2 text-sm text-white/55">
             A single well-named link with a campaign label makes the rest of the dashboard much more useful.
           </p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <p className="text-sm text-white/50">Trust signal</p>
           <h3 className="mt-2 text-lg font-semibold">Use a verified domain when you can</h3>
           <p className="mt-2 text-sm text-white/55">
             Branded short links usually feel safer to end users and perform better in campaigns.
           </p>
         </div>
-        <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-5">
+        <div className="premium-panel rounded-[28px] p-5">
           <p className="text-sm text-white/50">Operational note</p>
           <h3 className="mt-2 text-lg font-semibold">Exports and QR stay one click away</h3>
           <p className="mt-2 text-sm text-white/55">
@@ -444,6 +444,17 @@ export default function LinksPage() {
               placeholder="launch"
               error={createLinkErrors.campaign}
             />
+
+            <div className="grid gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Preview hostname</p>
+                <p className="mt-2 font-medium text-white">{domain === 'default' ? 'Default workspace host' : domain}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Preview path</p>
+                <p className="mt-2 font-medium text-cyan-300">/{slug.trim() || 'auto-generated-slug'}</p>
+              </div>
+            </div>
 
             <Button type="submit" disabled={submitting} fullWidth>
               {submitting ? 'Creating...' : 'Create link'}
@@ -556,10 +567,7 @@ export default function LinksPage() {
         ) : (
           <div className="space-y-4">
             {filteredLinks.map((link) => (
-              <div
-                key={link.id}
-                className="rounded-2xl border border-white/10 bg-slate-900/70 p-5"
-              >
+              <div key={link.id} className="premium-panel rounded-2xl p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <h4 className="truncate text-lg font-medium text-white">

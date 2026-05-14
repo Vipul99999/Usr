@@ -2,12 +2,17 @@
 
 :root {
   color-scheme: dark;
-  --page-bg: #03111f;
-  --panel-bg: rgba(8, 19, 36, 0.76);
+  --page-bg: #041019;
+  --page-bg-deep: #02070f;
+  --panel-bg: rgba(9, 19, 34, 0.78);
+  --panel-bg-strong: rgba(7, 15, 27, 0.92);
   --panel-border: rgba(255, 255, 255, 0.08);
-  --accent: #67e8f9;
-  --accent-strong: #22d3ee;
-  --warm: #f59e0b;
+  --panel-border-strong: rgba(255, 255, 255, 0.14);
+  --accent: #8cf4ff;
+  --accent-strong: #34d6e8;
+  --accent-ink: #022a33;
+  --warm: #efb251;
+  --blush: #f9735b;
 }
 
 html,
@@ -15,12 +20,22 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  font-family:
+    "Avenir Next",
+    "Segoe UI Variable Display",
+    "SF Pro Display",
+    "Helvetica Neue",
+    sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(34, 211, 238, 0.14), transparent 24rem),
-    radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 22rem),
-    linear-gradient(180deg, #04111d 0%, #020617 45%, #020617 100%);
+    radial-gradient(circle at 14% 12%, rgba(52, 214, 232, 0.16), transparent 24rem),
+    radial-gradient(circle at 86% 12%, rgba(239, 178, 81, 0.12), transparent 22rem),
+    radial-gradient(circle at 50% 120%, rgba(249, 115, 91, 0.08), transparent 30rem),
+    linear-gradient(180deg, var(--page-bg) 0%, #020611 45%, var(--page-bg-deep) 100%);
   color: white;
   background-attachment: fixed;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -43,6 +58,16 @@ body::before {
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 88%);
 }
 
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.06), transparent 32%),
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.18) 100%);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -62,4 +87,57 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+.premium-shell {
+  position: relative;
+}
+
+.premium-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 28%);
+  opacity: 0.8;
+}
+
+.premium-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    var(--panel-bg);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(22px);
+}
+
+.premium-panel-strong {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--panel-border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 22%),
+    var(--panel-bg-strong);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+}
+
+.premium-orbit {
+  position: relative;
+}
+
+.premium-orbit::after {
+  content: '';
+  position: absolute;
+  inset: 10% 12%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.55;
+  pointer-events: none;
 }

@@ -81,7 +81,7 @@ export default function RegisterPage() {
     <GuestOnly>
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 text-white">
         <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[36px] border border-white/10 bg-[rgba(8,19,36,0.86)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur lg:p-10">
+          <div className="premium-panel rounded-[36px] p-8 lg:p-10">
             <p className="text-sm uppercase tracking-[0.3em] text-white/45">Create account</p>
             <h1 className="mt-4 text-3xl font-semibold">Launch your link workspace</h1>
             <p className="mt-3 text-white/60">
@@ -145,10 +145,10 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(160deg,rgba(245,158,11,0.13),rgba(8,19,36,0.9)_34%,rgba(8,19,36,0.98))] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] lg:p-10">
+          <div className="premium-panel-strong rounded-[36px] bg-[linear-gradient(160deg,rgba(245,158,11,0.13),rgba(8,19,36,0.9)_34%,rgba(8,19,36,0.98))] p-8 lg:p-10">
             <p className="text-sm uppercase tracking-[0.35em] text-amber-100/70">Why teams stay</p>
             <h2 className="mt-5 max-w-xl text-4xl font-semibold leading-tight">
-              One place for branded redirects, exports, and performance signals.
+              One place for branded redirects, campaign clarity, and operational trust.
             </h2>
             <div className="mt-8 grid gap-4">
               <div className="rounded-3xl border border-white/10 bg-black/15 p-5">

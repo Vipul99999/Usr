@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card'
 import { FormMessage } from '@/components/ui/form-message'
 import { SkeletonCard } from '@/components/ui/skeleton-card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/lib/hooks/use-toast'
 import { formatWorkspaceRole } from '@/lib/utils/roles'
 
@@ -590,7 +591,12 @@ export default function SettingsPage() {
 
         <div className="mt-6 space-y-4">
           {members.length === 0 ? (
-            <p className="text-white/60">No members found.</p>
+            <EmptyState
+              title="No members yet"
+              description="Invite teammates when you are ready to share campaigns, domains, and analytics across the workspace."
+              actionLabel="Open members"
+              actionHref="/dashboard/members"
+            />
           ) : (
             members.map((member) => (
               <div
@@ -649,7 +655,10 @@ export default function SettingsPage() {
 
         <div className="mt-6 space-y-4">
           {domains.filter((item) => item.hostname !== 'default').length === 0 ? (
-            <p className="text-white/60">No custom domains yet.</p>
+            <EmptyState
+              title="No custom domains yet"
+              description="Add a branded subdomain like go.example.com to make short links feel more trustworthy and memorable."
+            />
           ) : (
             domains
               .filter((item) => item.hostname !== 'default')
@@ -880,6 +889,12 @@ export default function SettingsPage() {
               {' '}| ~{Math.round(((opsOverview?.cache.l1.totalBytes ?? 0) / 1024 / 1024) * 10) / 10} MB of
               {' '}{Math.round(((opsOverview?.cache.l1.maxBytes ?? 0) / 1024 / 1024) * 10) / 10} MB
             </p>
+            <p className="mt-2">
+              Current mode: <span className="font-medium uppercase text-white">{opsOverview?.cache.mode || 'l1-only'}</span>
+              {opsOverview?.cache.redisConfigured
+                ? ' with Redis configured for shared cache resilience.'
+                : ' without shared Redis, which is fine locally but not ideal for production.'}
+            </p>
           </div>
 
           <div className="mt-6 space-y-3">
@@ -903,7 +918,10 @@ export default function SettingsPage() {
                 </div>
               ))
             ) : (
-              <p className="mt-6 text-white/60">No recent email delivery events yet.</p>
+              <EmptyState
+                title="No recent email delivery events"
+                description="Verification, invitation, and password-reset deliveries will show up here once email traffic starts flowing."
+              />
             )}
           </div>
         </Card>
@@ -945,7 +963,12 @@ export default function SettingsPage() {
                 </div>
               ))
             ) : (
-              <p className="mt-6 text-white/60">No recent abuse signals in this workspace.</p>
+              <EmptyState
+                title="No recent abuse signals"
+                description="This workspace has not triggered recent redirect, auth, or machine-auth abuse warnings."
+                actionLabel="Open security center"
+                actionHref="/dashboard/security"
+              />
             )}
           </div>
         </Card>
